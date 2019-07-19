@@ -3,7 +3,7 @@ import os
 
 def opencsv(inFile, delim=','):
     if os.path.exists(inFile):
-        assert isinstance(delimiter, str), 'Ensure your delimiter is a "str" type variable'
+        assert isinstance(delim, str), 'Ensure your delimiter is a "str" type variable'
     if os.path.exists(inFile):
         try:
             csvtable = np.genfromtxt(inFile, delimiter=delim, dtype=float, names=True)
@@ -13,7 +13,7 @@ def opencsv(inFile, delim=','):
         raise Exception('Check whether file exists, unable to locate: {}'.format(inFile))
     return csvtable
 
-def csv2array(csvtable)
+def csv2array(csvtable):
     array = np.zeros((len(csvtable), len(csvtable[0])), dtype=float)
     for i in range(0, len(csvtable)):
         tmp = csvtable[i]
