@@ -30,24 +30,23 @@ history = model.fit(data, labels, epochs=250, batch_size=10, validation_split=0.
 
 pwd = os.path.dirname(os.path.realpath(__file__))
 savePath = os.path.join(pwd, 'model_fit.png')
-plot_model(model, to_file=savePath)
 
-# # Plot training & validation accuracy values
-# plt.subplot(121)
-# plt.plot(history.history['acc'])
-# plt.plot(history.history['val_acc'])
-# plt.title('Model accuracy')
-# plt.ylabel('Accuracy')
-# plt.xlabel('Epoch')
-# plt.legend(['Train', 'Test'], loc='upper left')
-#
-# # Plot training & validation loss values
-# plt.subplot(122)
-# plt.plot(history.history['loss'])
-# plt.plot(history.history['val_loss'])
-# plt.title('Model loss')
-# plt.ylabel('Loss')
-# plt.xlabel('Epoch')
-# plt.legend(['Train', 'Test'], loc='upper left')
-#
-# plt.show()
+# Plot training & validation accuracy values
+plt.subplot(121)
+plt.plot(history.history['acc'])
+plt.plot(history.history['val_acc'])
+plt.title('Model accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='lower right')
+
+# Plot training & validation loss values
+plt.subplot(122)
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Model loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper right')
+
+plt.savefig(savePath, dpi=600)
