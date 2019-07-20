@@ -16,7 +16,7 @@ labels = data[:,0]
 data = data[:,1:]
 
 # Split into training and validation sets and scale
-X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size = 0.25, random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size = 0.20, random_state = 0)
 sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
@@ -35,7 +35,7 @@ model = Sequential([
 classifier = Sequential()
 
 # Adding the Single Perceptron or Shallow network
-classifier.add(Dense(output_dim=128, init='uniform', activation='relu', input_dim=dataIn.shape[1]))
+classifier.add(Dense(output_dim=64, init='uniform', activation='relu', input_dim=dataIn.shape[1]))
 # Adding dropout to prevent overfitting
 classifier.add(Dropout(p=0.1))
 # Adding the output layer
@@ -45,7 +45,7 @@ classifier.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
 classifier.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 # Fitting the ANN to the Training set
 early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-history = classifier.fit(dataIn, labelsIn, batch_size=100, nb_epoch=150)
+history = classifier.fit(dataIn, labelsIn, batch_size=10, nb_epoch=200)
 
 # Predicting the Test set results
 y_pred = classifier.predict(X_test)
@@ -54,7 +54,7 @@ y_pred = (y_pred > 0.5)
 from sklearn.metrics import confusion_matrix
 cm = confusion_matrix(y_test, y_pred)
 print(cm)
-print("Test accuracy is {}%".format(((110/114)*100)))
+print("Test accuracy is {}%".format(((cm[0][0] + cm[1][1])/np.sum(cm))*100))
 
 # Form Graph Path
 pwd = os.path.dirname(os.path.realpath(__file__))
