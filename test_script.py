@@ -5,6 +5,8 @@ from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.callbacks import EarlyStopping
+from keras.optimizers import SGD
+from keras.layers import Conv1D, GlobalAveragePooling1D, MaxPooling1D
 import matplotlib.pyplot as plt
 import os
 
@@ -17,9 +19,9 @@ data = data[:,1:]
 
 # Split into training and validation sets and scale
 X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size = 0.20, random_state = 0)
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
+# sc = StandardScaler()
+# X_train = sc.fit_transform(X_train)
+# X_test = sc.transform(X_test)
 
 # Choose whether data/labels or X_Train,y_train
 dataIn = X_train
@@ -38,14 +40,15 @@ classifier = Sequential()
 classifier.add(Dense(output_dim=64, init='uniform', activation='relu', input_dim=dataIn.shape[1]))
 # Adding dropout to prevent overfitting
 classifier.add(Dropout(p=0.1))
+# Adding hidden layers
+model.add(Dense(60, input_dim=60, kernel_initializer='normal', activation='relu'))
 # Adding the output layer
 classifier.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
-
 # criterion loss and optimizer
 classifier.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 # Fitting the ANN to the Training set
 early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-history = classifier.fit(dataIn, labelsIn, batch_size=10, nb_epoch=200)
+history = classifier.fit(dataIn, labelsIn, batch_size=50, nb_epoch=150)
 
 # Predicting the Test set results
 y_pred = classifier.predict(X_test)
