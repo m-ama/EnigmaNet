@@ -7,6 +7,7 @@ from keras.layers import Dense, Dropout, Activation
 from keras.callbacks import EarlyStopping
 from keras.optimizers import SGD
 from keras.layers import Conv1D, GlobalAveragePooling1D, MaxPooling1D
+from keras_tqdm import TQDMCallback
 import matplotlib.pyplot as plt
 import os
 
@@ -18,7 +19,7 @@ labels = data[:,0]
 data = data[:,1:]
 
 # Split into training and validation sets and scale
-X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size = 0.20, random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size = 0.10, random_state = 0)
 # sc = StandardScaler()
 # X_train = sc.fit_transform(X_train)
 # X_test = sc.transform(X_test)
@@ -48,7 +49,7 @@ classifier.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
 classifier.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 # Fitting the ANN to the Training set
 early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-history = classifier.fit(dataIn, labelsIn, batch_size=50, nb_epoch=150)
+history = classifier.fit(dataIn, labelsIn, batch_size=50, epochs=150, callbacks=[TQDMCallback()])
 
 # Predicting the Test set results
 y_pred = classifier.predict(X_test)
