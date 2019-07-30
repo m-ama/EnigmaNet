@@ -21,8 +21,10 @@ csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
 dFrame = pd.read_csv(csvPath)           # Dataframe
 data = dFrame.loc[:, dBegin:]           # Extract all numerical value from 'ICV' onwards
 uniqClass = dFrame[classSel].unique()   # All unique classes
+print('...found ' + str(uniqClass.size) + ' classes')
 
 # Fill missing iteratively for each class
+print('...filling missing data with class means')
 for c in uniqClass:
     classIdx = dFrame.loc[:, classSel] == c      # Index where class is uniqClass = c
     inputs = tqdm(range(len(data.columns)))
