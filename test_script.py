@@ -1,5 +1,6 @@
 import createFeatures as cf
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
@@ -9,14 +10,15 @@ from keras.optimizers import SGD
 from keras.layers import Conv1D, GlobalAveragePooling1D, MaxPooling1D
 from keras_tqdm import TQDMCallback
 import matplotlib.pyplot as plt
+import tqdm
 import os
 
 # Load Files
-csvPath = "D:/SystemFiles/siddh/Box Sync/Home-Work/featsTable.csv"
-tbl = cf.opencsv(csvPath)
-data = cf.csv2array(tbl)
-labels = data[:,0]
-data = data[:,1:]
+csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
+dFrame = pd.read_csv(csvPath)   # Dataframe
+data = dFrame.loc[:,'ICV':]     # Extract all numerical value from 'ICV' onwards
+sdx = dFrame['SDx']
+classUniq =  sdx.unique()
 
 # Split into training and validation sets and scale
 X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size = 0.10, random_state = 0)
