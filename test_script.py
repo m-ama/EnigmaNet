@@ -1,6 +1,7 @@
 import createFeatures as cf
 import numpy as np
 import pandas as pd
+from neuroCombat import neuroCombat
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
@@ -12,30 +13,50 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import os
 
+def classfill(dFrame, classSel, idxRange):
+    """Fills missing values with means of a class
+    
+    Inputs
+    ------
+    dFrame:   Pandas dataframe to process (type: dataframe)
+            
+    classSel: String indicating dataframe column name containing class information
+    
+    idxRange: 2x1 vector indicating lower and upper bound of data to fill in dataframe
+              idxRange[0] is lower bound
+              idxRange[1] is upper bound
+
+    Returns
+    -------
+    data:     Dataframe will all missing values filled
+    """
+    uniqClass = dFrame[classSel].unique()           # All unique classes
+    print('...found ' + str(uniqClass.size) + ' classes')
+    print('...filling missing data with class means')
+    data = dFrame.loc[:, idxRange[0]:idxRange[1]]                 # Extract all numerical value from 'dBegin' onwards
+    for c in uniqClass:
+        classIdx = dFrame.loc[:, classSel] == c     # Index where class is uniqClass = c
+        for n in range(len(data.columns)):
+            nanIdx = data.iloc[:,n].isnull()           # Index missing values
+            # Compute mean of class values without nans
+            # Because a Series of booleans cannot be used to index a dataframe, use the values attribute
+            # to extract a bool array
+            mu = np.nanmean(data.iloc[classIdx.values, n])
+            data.iloc[nanIdx.values, n] = mu
+    dFrame.loc[:,idxRange[0]:idxRange[1]] = data
+    return dFrame
+
 # Init Variables
 classSel = 'Dx'    # Class labels
 dBegin = 'ICV'      # Column where actual begins
+dEnd = 'R_insula_surfavg'
 
 # Load Files
 csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
 dFrame = pd.read_csv(csvPath)           # Dataframe
-data = dFrame.loc[:, dBegin:]           # Extract all numerical value from 'ICV' onwards
-uniqClass = dFrame[classSel].unique()   # All unique classes
-print('...found ' + str(uniqClass.size) + ' classes')
+dFrame = classfill(dFrame, classSel, [dBegin, dEnd])
 
-# Fill missing iteratively for each class
-print('...filling missing data with class means')
-for c in uniqClass:
-    classIdx = dFrame.loc[:, classSel] == c      # Index where class is uniqClass = c
-    inputs = tqdm(range(len(data.columns)))
-    for n in inputs:
-        nanIdx = data.iloc[:,n].isnull()           # Index missing values
-        # Compute mean of class values without nans
-        # Because a Series of booleans cannot be used to index a dataframe, use the values attribute
-        # to extract a bool array
-        mu = np.nanmean(data.iloc[classIdx.values, n])
-        data.iloc[nanIdx.values, n] = mu
-
+data = dFrame.loc[:,dBegin:dEnd]
 # Scale data
 scaler = StandardScaler()
 data = scaler.fit_transform(data)
@@ -49,7 +70,6 @@ X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classSel
 # Choose whether data/labels or X_Train,y_train
 dataIn = X_train
 labelsIn = y_train
-
 
 # Initialising the ANN
 model = Sequential()
