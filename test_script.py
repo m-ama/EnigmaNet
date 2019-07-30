@@ -1,5 +1,6 @@
 import createFeatures as cf
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
@@ -7,19 +8,40 @@ from keras.layers import Dense, Dropout, Activation
 from keras.callbacks import EarlyStopping
 from keras.optimizers import SGD
 from keras.layers import Conv1D, GlobalAveragePooling1D, MaxPooling1D
-from keras_tqdm import TQDMCallback
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 import os
 
+# Init Variables
+classSel = 'Dx'    # Class labels
+dBegin = 'ICV'      # Column where actual begins
+
 # Load Files
-csvPath = "D:/SystemFiles/siddh/Box Sync/Home-Work/featsTable.csv"
-tbl = cf.opencsv(csvPath)
-data = cf.csv2array(tbl)
-labels = data[:,0]
-data = data[:,1:]
+csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
+dFrame = pd.read_csv(csvPath)           # Dataframe
+data = dFrame.loc[:, dBegin:]           # Extract all numerical value from 'ICV' onwards
+uniqClass = dFrame[classSel].unique()   # All unique classes
+print('...found ' + str(uniqClass.size) + ' classes')
+
+# Fill missing iteratively for each class
+print('...filling missing data with class means')
+for c in uniqClass:
+    classIdx = dFrame.loc[:, classSel] == c      # Index where class is uniqClass = c
+    inputs = tqdm(range(len(data.columns)))
+    for n in inputs:
+        nanIdx = data.iloc[:,n].isnull()           # Index missing values
+        # Compute mean of class values without nans
+        # Because a Series of booleans cannot be used to index a dataframe, use the values attribute
+        # to extract a bool array
+        mu = np.nanmean(data.iloc[classIdx.values, n])
+        data.iloc[nanIdx.values, n] = mu
+
+# Scale data
+scaler = StandardScaler()
+data = scaler.fit_transform(data)
 
 # Split into training and validation sets and scale
-X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size = 0.10, random_state = 0)
+X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classSel], test_size = 0.10, random_state = 0)
 # sc = StandardScaler()
 # X_train = sc.fit_transform(X_train)
 # X_test = sc.transform(X_test)
@@ -28,31 +50,26 @@ X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size = 0.
 dataIn = X_train
 labelsIn = y_train
 
-# Initialize Model
-model = Sequential([
-    Dense(1, input_shape=(data.shape[1],)),
-    Activation('relu'),
-])
 
 # Initialising the ANN
-classifier = Sequential()
+model = Sequential()
 
 # Adding the Single Perceptron or Shallow network
-classifier.add(Dense(output_dim=64, init='uniform', activation='relu', input_dim=dataIn.shape[1]))
+model.add(Dense(output_dim=64, init='uniform', activation='relu', input_dim=dataIn.shape[1]))
 # Adding dropout to prevent overfitting
-classifier.add(Dropout(p=0.1))
+model.add(Dropout(p=0.1))
 # Adding hidden layers
 model.add(Dense(60, input_dim=60, kernel_initializer='normal', activation='relu'))
 # Adding the output layer
-classifier.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
+model.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
 # criterion loss and optimizer
-classifier.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 # Fitting the ANN to the Training set
 early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-history = classifier.fit(dataIn, labelsIn, batch_size=50, epochs=150, callbacks=[TQDMCallback()])
+history = model.fit(dataIn, labelsIn, batch_size=50, epochs=150)
 
 # Predicting the Test set results
-y_pred = classifier.predict(X_test)
+y_pred = model.predict(X_test)
 y_pred = (y_pred > 0.5)
 # Making the Confusion Matrix
 from sklearn.metrics import confusion_matrix
