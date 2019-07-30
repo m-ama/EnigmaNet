@@ -47,14 +47,21 @@ def classfill(dFrame, classSel, idxRange):
     return dFrame
 
 # Init Variables
-classSel = 'Dx'    # Class labels
-dBegin = 'ICV'      # Column where actual begins
-dEnd = 'R_insula_surfavg'
+classSel = 'Dx'             # Class labels
+dBegin = 'ICV'              # Column where data begins
+dEnd = 'R_insula_surfavg'   # Column where data ends
+fillmissing = True          # Fill missing?
 
 # Load Files
 csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
 dFrame = pd.read_csv(csvPath)           # Dataframe
-dFrame = classfill(dFrame, classSel, [dBegin, dEnd])
+if fillmissing:
+    dFrame = classfill(dFrame, classSel, [dBegin, dEnd])
+else:
+    print('...skip fill missing')
+
+
+
 
 data = dFrame.loc[:,dBegin:dEnd]
 # Scale data
