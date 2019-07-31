@@ -3,6 +3,8 @@ import pandas as pd
 from neuroCombat import neuroCombat
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import cohen_kappa_score
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.callbacks import EarlyStopping
@@ -52,7 +54,8 @@ cBegin = 'Site'             # Column where covariates/demographics begin
 cEnd = 'Sex'                # Column where covariates/demographics end
 fillmissing = True          # Fill missing?
 harmonize = True            # Run ComBat harmonization?
-plotType = 'Normal'        # Type of ComBat graphs to save ('Histogram' or 'Normal')
+dataSplit = 0.10            # Percent of data to remove for validation
+plotType = 'Normal'         # Type of ComBat graphs to save ('Histogram' or 'Normal')
 
 # Combat Variables
 if harmonize:
@@ -89,9 +92,9 @@ data = scaler.fit_transform(data)
 
 # Split into training and validation sets and scale
 if harmonize:
-    X_train, X_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classSel], test_size=0.10, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classSel], test_size=dataSplit, random_state=0)
 else:
-    X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classSel], test_size=0.10, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classSel], test_size=dataSplit, random_state=0)
 
 
 # sc = StandardScaler()
@@ -123,10 +126,11 @@ history = model.fit(dataIn, labelsIn, batch_size=50, epochs=150)
 y_pred = model.predict(X_test)
 y_pred = (y_pred > 0.5)
 # Making the Confusion Matrix
-from sklearn.metrics import confusion_matrix
 cm = confusion_matrix(y_test, y_pred)
 print(cm)
 print("Test accuracy is {}%".format(((cm[0][0] + cm[1][1])/np.sum(cm))*100))
+kappa = cohen_kappa_score(y_test, y_pred)
+print('Cohen' + """'""" + 's Kappa = ' + str(kappa))
 
 # Form Graph Path
 pwd = os.getcwd()
@@ -215,4 +219,4 @@ with plt.style.context('ggplot'):                                               
     plt.subplots_adjust(wspace=0.2, hspace=0.5)
 
 plt.tight_layout()
-plt.savefig(savePathComBat, dpi=800)
+plt.savefig(savePathComBat, dpi=600)
