@@ -8,6 +8,7 @@ from sklearn.metrics import cohen_kappa_score
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.callbacks import EarlyStopping
+from keras_tqdm import TQDMNotebookCallback
 import matplotlib.pyplot as plt
 import scipy.stats
 import random
@@ -120,7 +121,11 @@ model.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 # Fitting the ANN to the Training set
 early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-history = model.fit(dataIn, labelsIn, batch_size=50, epochs=150)
+history = model.fit(dataIn, labelsIn,
+                    batch_size=50,
+                    epochs=150,
+                    verbose=False,
+                    callbacks=[TQDMNotebookCallback()])
 
 # Predicting the Test set results
 y_pred = model.predict(X_test)
