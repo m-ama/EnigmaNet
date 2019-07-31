@@ -163,65 +163,66 @@ with plt.style.context('ggplot'):
 plt.savefig(savePathModel, dpi=600)
 
 # Plot ComBat before & after
-szSubPlot = 4                                                                   # Number of features to plot
-nBins = 20                                                                      # Number of bins
+if harmonize:
+    szSubPlot = 4                                                                   # Number of features to plot
+    nBins = 20                                                                      # Number of bins
 
-uniqSites = dFrame.loc[:,'Site'].unique()
-with plt.style.context('ggplot'):                                               # Plotting style
-    fig, axs = plt.subplots(np.sqrt(szSubPlot).astype(int), np.sqrt(szSubPlot).astype(int))
-    for axsNum, axsIdx in enumerate(axs.reshape(-1)):                                              # Iterate over subplots
-        plotIdx = random.randint(0,len(dFrame.loc[:,dBegin:dEnd].columns))      # Index random headers
-        for s in uniqSites:
-            siteIdx = dFrame.loc[:, 'Site'] == s
-            nBefore, bBefore = np.histogram(data[siteIdx.values, plotIdx],      # Bin count before
-                                           bins=nBins,
-                                           density=True)
-            nAfter, bAfter = np.histogram(cData[siteIdx.values, plotIdx],       # Bin count after
-                                         bins=nBins,
-                                         density=True)
+    uniqSites = dFrame.loc[:,'Site'].unique()
+    with plt.style.context('ggplot'):                                               # Plotting style
+        fig, axs = plt.subplots(np.sqrt(szSubPlot).astype(int), np.sqrt(szSubPlot).astype(int))
+        for axsNum, axsIdx in enumerate(axs.reshape(-1)):                                              # Iterate over subplots
+            plotIdx = random.randint(0,len(dFrame.loc[:,dBegin:dEnd].columns))      # Index random headers
+            for s in uniqSites:
+                siteIdx = dFrame.loc[:, 'Site'] == s
+                nBefore, bBefore = np.histogram(data[siteIdx.values, plotIdx],      # Bin count before
+                                               bins=nBins,
+                                               density=True)
+                nAfter, bAfter = np.histogram(cData[siteIdx.values, plotIdx],       # Bin count after
+                                             bins=nBins,
+                                             density=True)
 
-            mBefore = np.zeros((nBins,))
-            mAfter = np.zeros((nBins,))
-            for i  in range(len(bBefore)-1):                                    # Get median of bin edges
-                mBefore[i] = np.median([bBefore[i], bBefore[i + 1]])            # Median of bin edges (before)
-                mAfter[i] = np.median([bAfter[i], bAfter[i + 1]])               # Median of bin edges (after)
+                mBefore = np.zeros((nBins,))
+                mAfter = np.zeros((nBins,))
+                for i  in range(len(bBefore)-1):                                    # Get median of bin edges
+                    mBefore[i] = np.median([bBefore[i], bBefore[i + 1]])            # Median of bin edges (before)
+                    mAfter[i] = np.median([bAfter[i], bAfter[i + 1]])               # Median of bin edges (after)
 
-            siteIdx = dFrame.loc[:,'Site'] == s                                 # Extract data for a site
-            muBefore = np.mean(data[siteIdx.values, plotIdx])
-            muAfter = np.mean(cData[siteIdx.values, plotIdx])
-            stdBefore = np.std(data[siteIdx.values, plotIdx])
-            stdAfter = np.std(cData[siteIdx.values, plotIdx])
-            yBefore = scipy.stats.norm.pdf(mBefore, muBefore, stdBefore)
-            yAfter = scipy.stats.norm.pdf(mAfter, muAfter, stdAfter)
-            if plotType == 'Histogram':
-                yBefore = nBefore
-                yAfter = nAfter
-            elif plotType == 'Normal':
+                siteIdx = dFrame.loc[:,'Site'] == s                                 # Extract data for a site
+                muBefore = np.mean(data[siteIdx.values, plotIdx])
+                muAfter = np.mean(cData[siteIdx.values, plotIdx])
+                stdBefore = np.std(data[siteIdx.values, plotIdx])
+                stdAfter = np.std(cData[siteIdx.values, plotIdx])
                 yBefore = scipy.stats.norm.pdf(mBefore, muBefore, stdBefore)
                 yAfter = scipy.stats.norm.pdf(mAfter, muAfter, stdAfter)
+                if plotType == 'Histogram':
+                    yBefore = nBefore
+                    yAfter = nAfter
+                elif plotType == 'Normal':
+                    yBefore = scipy.stats.norm.pdf(mBefore, muBefore, stdBefore)
+                    yAfter = scipy.stats.norm.pdf(mAfter, muAfter, stdAfter)
 
-            axsIdx.plot(mBefore, yBefore,                                       # Plot on subplot(axsIdx) before
-                              color='#3a4750',
-                              alpha=0.25)
+                axsIdx.plot(mBefore, yBefore,                                       # Plot on subplot(axsIdx) before
+                                  color='#3a4750',
+                                  alpha=0.25)
 
-            axsIdx.plot(mAfter, yAfter,                                         # Plot on subplot(axsIdx) after
-                              color='#d72323',
-                              alpha=0.25)
+                axsIdx.plot(mAfter, yAfter,                                         # Plot on subplot(axsIdx) after
+                                  color='#d72323',
+                                  alpha=0.25)
 
-            if axsNum == 0 or axsNum == 2:
-                axsIdx.set_ylabel('% OF SUBJECTS',
+                if axsNum == 0 or axsNum == 2:
+                    axsIdx.set_ylabel('% OF SUBJECTS',
+                                      fontsize=6)
+
+                axsIdx.set_xlabel(dFrame.loc[:, dBegin:dEnd].columns[plotIdx].upper(),
                                   fontsize=6)
 
-            axsIdx.set_xlabel(dFrame.loc[:, dBegin:dEnd].columns[plotIdx].upper(),
-                              fontsize=6)
+        fig.legend(['Before ComBat', 'After ComBat'],                               # Legend
+                   loc = 'lower right',
+                   ncol=2,
+                   fancybox=True,
+                   bbox_to_anchor=(0.5,-0.1))
+        plt.suptitle('ComBat Harmonization: Before and After')
+        plt.subplots_adjust(wspace=0.2, hspace=0.5)
 
-    fig.legend(['Before ComBat', 'After ComBat'],                               # Legend
-               loc = 'lower right',
-               ncol=2,
-               fancybox=True,
-               bbox_to_anchor=(0.5,-0.1))
-    plt.suptitle('ComBat Harmonization: Before and After')
-    plt.subplots_adjust(wspace=0.2, hspace=0.5)
-
-plt.tight_layout()
-plt.savefig(savePathComBat, dpi=600)
+    plt.tight_layout()
+    plt.savefig(savePathComBat, dpi=600)
