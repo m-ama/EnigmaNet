@@ -56,6 +56,8 @@ cEnd = 'Sex'                # Column where covariates/demographics end
 fillmissing = True          # Fill missing?
 harmonize = True            # Run ComBat harmonization?
 dataSplit = 0.10            # Percent of data to remove for validation
+nEpochs = 500               # Training number of epochs
+bSize = 50                  # Training batch size
 plotType = 'Normal'         # Type of ComBat graphs to save ('Histogram' or 'Normal')
 
 # Combat Variables
@@ -122,8 +124,8 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
 # Fitting the ANN to the Training set
 early_stopping = EarlyStopping(monitor='val_loss', patience=2)
 history = model.fit(dataIn, labelsIn,
-                    batch_size=50,
-                    epochs=150,
+                    batch_size=bSize,
+                    epochs=nEpochs,
                     verbose=False,
                     callbacks=[TQDMNotebookCallback()])
 
