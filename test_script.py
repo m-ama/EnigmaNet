@@ -55,6 +55,7 @@ cBegin = 'Site'             # Column where covariates/demographics begin
 cEnd = 'Sex'                # Column where covariates/demographics end
 fillmissing = True          # Fill missing?
 harmonize = True            # Run ComBat harmonization?
+scaleData = True            # Rescale data?
 dataSplit = 0.10            # Percent of data to remove for validation
 nEpochs = 500               # Training number of epochs
 bSize = 50                  # Training batch size
@@ -80,15 +81,14 @@ cData = neuroCombat(data=dFrame.loc[:,dBegin:dEnd],
                       batch_col=batchVar,
                       discrete_cols=discreteVar,
                       continuous_cols=continuousVar)
-# Scale data
-scaler = StandardScaler()
-cData = scaler.fit_transform(cData)
 
+data = np.array(dFrame.loc[:, dBegin:dEnd])     # Preserve non-harmonized data
 
-data = np.array(dFrame.loc[:, dBegin:dEnd])
 # Scale data
-scaler = StandardScaler()
-data = scaler.fit_transform(data)
+scaler = StandardScaler()   # Initialize scaler
+if scaleData:
+    cData = scaler.fit_transform(cData)
+    data = scaler.fit_transform(data)
 
 
 # Split into training and validation sets and scale
