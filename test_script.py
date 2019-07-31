@@ -1,4 +1,3 @@
-import createFeatures as cf
 import numpy as np
 import pandas as pd
 from neuroCombat import neuroCombat
@@ -7,10 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.callbacks import EarlyStopping
-from keras.optimizers import SGD
-from keras.layers import Conv1D, GlobalAveragePooling1D, MaxPooling1D
 import matplotlib.pyplot as plt
-import matplotlib.mlab as mlab
 import scipy.stats
 import random
 import os
@@ -56,6 +52,7 @@ cBegin = 'Site'             # Column where covariates/demographics begin
 cEnd = 'Sex'                # Column where covariates/demographics end
 fillmissing = True          # Fill missing?
 harmonize = True            # Run ComBat harmonization?
+plotType = 'Normal'        # Type of ComBat graphs to save ('Histogram' or 'Normal')
 
 # Combat Variables
 if harmonize:
@@ -137,23 +134,23 @@ savePathModel = os.path.join(pwd, 'model_fit.png')
 savePathComBat = os.path.join(pwd, 'combat.png')
 
 # Plot training & validation accuracy values
-plt.subplot(121)
-plt.plot(history.history['acc'])
-# plt.plot(history.history['val_acc'])
-plt.title('Model accuracy')
-plt.ylabel('Accuracy')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Test'], loc='lower right')
+with plt.style.context('ggplot'):
+    plt.subplot(121)
+    plt.plot(history.history['acc'])
+    # plt.plot(history.history['val_acc'])
+    plt.title('Model accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Test'], loc='lower right')
 
-# Plot training & validation loss values
-plt.subplot(122)
-plt.plot(history.history['loss'])
-# plt.plot(history.history['val_loss'])
-plt.title('Model loss')
-plt.ylabel('Loss')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Test'], loc='upper right')
-
+    # Plot training & validation loss values
+    plt.subplot(122)
+    plt.plot(history.history['loss'])
+    # plt.plot(history.history['val_loss'])
+    plt.title('Model loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Test'], loc='upper right')
 plt.savefig(savePathModel, dpi=600)
 
 # Plot ComBat before & after
@@ -187,36 +184,35 @@ with plt.style.context('ggplot'):                                               
             stdAfter = np.std(cData[siteIdx.values, plotIdx])
             yBefore = scipy.stats.norm.pdf(mBefore, muBefore, stdBefore)
             yAfter = scipy.stats.norm.pdf(mAfter, muAfter, stdAfter)
-            axsIdx.plot(mBefore, yBefore,                                 # Plot on subplot(axsIdx) before
+            if plotType == 'Histogram':
+                yBefore = nBefore
+                yAfter = nAfter
+            elif plotType == 'Normal':
+                yBefore = scipy.stats.norm.pdf(mBefore, muBefore, stdBefore)
+                yAfter = scipy.stats.norm.pdf(mAfter, muAfter, stdAfter)
+
+            axsIdx.plot(mBefore, yBefore,                                       # Plot on subplot(axsIdx) before
                               color='#3a4750',
                               alpha=0.25)
 
-            axsIdx.plot(mAfter, yAfter,                                   # Plot on subplot(axsIdx) after
+            axsIdx.plot(mAfter, yAfter,                                         # Plot on subplot(axsIdx) after
                               color='#d72323',
                               alpha=0.25)
-            axsIdx.set(xlabel = dFrame.loc[:, dBegin:dEnd].columns[plotIdx].upper())
 
+            if axsNum == 0 or axsNum == 2:
+                axsIdx.set_ylabel('% OF SUBJECTS',
+                                  fontsize=6)
 
-            # muBefore = np.mean(data[siteIdx.values, plotIdx])
-            # muAfter = np.mean(cData[siteIdx.values, plotIdx])
-            # stdBefore = np.std(data[siteIdx.values, plotIdx])
-            # stdAfter = np.std(cData[siteIdx.values, plotIdx])
-            # yBefore = scipy.stats.norm.pdf(bBefore, muBefore, stdBefore)
-            # yAfter = scipy.stats.norm.pdf(bAfter, muAfter, stdAfter)
-            # axs[0] = plt.plot(bBefore, yBefore,
-            #                   color='#8c8c8c',
-            #                   alpha=0.5)
-            # axs[1] = plt.plot(bAfter, yAfter,
-            #                   color='#d11141',
+            axsIdx.set_xlabel(dFrame.loc[:, dBegin:dEnd].columns[plotIdx].upper(),
+                              fontsize=6)
 
-            #                   alpha=0.5)
-            # axs[0] = plt.hist(data.iloc[siteIdx.values, 0], bins=20, density=True)
-            # axs[1] = plt.hist(cData[siteIdx.values, 0], bins=20, density=True)
-    fig.legend(['Before ComBat', 'After ComBat'],                           # Legend
-               loc = 'lower center',
+    fig.legend(['Before ComBat', 'After ComBat'],                               # Legend
+               loc = 'lower right',
+               ncol=2,
                fancybox=True,
-               shadow=True,
                bbox_to_anchor=(0.5,-0.1))
-plt.savefig(savePathComBat, dpi=600)
+    plt.suptitle('ComBat Harmonization: Before and After')
+    plt.subplots_adjust(wspace=0.2, hspace=0.5)
 
-
+plt.tight_layout()
+plt.savefig(savePathComBat, dpi=800)
