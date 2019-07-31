@@ -63,8 +63,8 @@ plotType = 'Normal'         # Type of ComBat graphs to save ('Histogram' or 'Nor
 # Combat Variables
 if harmonize:
     batchVar = 'Site'           # Batch effect variable
-    discreteVar = 'Sex'         # Variables which are categorical that you want to predict
-    continuousVar = 'Age'       # Variables which are continuous that you want to predict
+    discreteVar = ['Dx','Sex']  # Variables which are categorical that you want to predict
+    continuousVar = ['Age']     # Variables which are continuous that you want to predict
 
 # Load Files
 csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
@@ -75,8 +75,6 @@ else:
     print('...skip fill missing')
 
 # Run combat
-batch = ['Site', 'SubjID']
-mod = [classSel, 'Age', 'Sex']
 cData = neuroCombat(data=dFrame.loc[:,dBegin:dEnd],
                       covars=dFrame.loc[:,cBegin:cEnd],
                       batch_col=batchVar,
