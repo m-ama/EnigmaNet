@@ -10,7 +10,9 @@ from keras.callbacks import EarlyStopping
 from keras.optimizers import SGD
 from keras.layers import Conv1D, GlobalAveragePooling1D, MaxPooling1D
 import matplotlib.pyplot as plt
-from tqdm import tqdm
+import matplotlib.mlab as mlab
+import scipy.stats
+import random
 import os
 
 def classfill(dFrame, classSel, idxRange):
@@ -50,7 +52,16 @@ def classfill(dFrame, classSel, idxRange):
 classSel = 'Dx'             # Class labels
 dBegin = 'ICV'              # Column where data begins
 dEnd = 'R_insula_surfavg'   # Column where data ends
+cBegin = 'Site'             # Column where covariates/demographics begin
+cEnd = 'Sex'                # Column where covariates/demographics end
 fillmissing = True          # Fill missing?
+harmonize = True            # Run ComBat harmonization?
+
+# Combat Variables
+if harmonize:
+    batchVar = 'Site'           # Batch effect variable
+    discreteVar = 'Sex'         # Variables which are categorical that you want to predict
+    continuousVar = 'Age'       # Variables which are continuous that you want to predict
 
 # Load Files
 csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
@@ -60,16 +71,32 @@ if fillmissing:
 else:
     print('...skip fill missing')
 
+# Run combat
+batch = ['Site', 'SubjID']
+mod = [classSel, 'Age', 'Sex']
+cData = neuroCombat(data=dFrame.loc[:,dBegin:dEnd],
+                      covars=dFrame.loc[:,cBegin:cEnd],
+                      batch_col=batchVar,
+                      discrete_cols=discreteVar,
+                      continuous_cols=continuousVar)
+# Scale data
+scaler = StandardScaler()
+cData = scaler.fit_transform(cData)
 
 
-
-data = dFrame.loc[:,dBegin:dEnd]
+data = np.array(dFrame.loc[:, dBegin:dEnd])
 # Scale data
 scaler = StandardScaler()
 data = scaler.fit_transform(data)
 
+
 # Split into training and validation sets and scale
-X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classSel], test_size = 0.10, random_state = 0)
+if harmonize:
+    X_train, X_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classSel], test_size=0.10, random_state=0)
+else:
+    X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classSel], test_size=0.10, random_state=0)
+
+
 # sc = StandardScaler()
 # X_train = sc.fit_transform(X_train)
 # X_test = sc.transform(X_test)
@@ -105,8 +132,9 @@ print(cm)
 print("Test accuracy is {}%".format(((cm[0][0] + cm[1][1])/np.sum(cm))*100))
 
 # Form Graph Path
-pwd = os.path.dirname(os.path.realpath(__file__))
-savePath = os.path.join(pwd, 'model_fit.png')
+pwd = os.getcwd()
+savePathModel = os.path.join(pwd, 'model_fit.png')
+savePathComBat = os.path.join(pwd, 'combat.png')
 
 # Plot training & validation accuracy values
 plt.subplot(121)
@@ -126,4 +154,69 @@ plt.ylabel('Loss')
 plt.xlabel('Epoch')
 plt.legend(['Train', 'Test'], loc='upper right')
 
-plt.savefig(savePath, dpi=600)
+plt.savefig(savePathModel, dpi=600)
+
+# Plot ComBat before & after
+szSubPlot = 4                                                                   # Number of features to plot
+nBins = 20                                                                      # Number of bins
+
+uniqSites = dFrame.loc[:,'Site'].unique()
+with plt.style.context('ggplot'):                                               # Plotting style
+    fig, axs = plt.subplots(np.sqrt(szSubPlot).astype(int), np.sqrt(szSubPlot).astype(int))
+    for axsNum, axsIdx in enumerate(axs.reshape(-1)):                                              # Iterate over subplots
+        plotIdx = random.randint(0,len(dFrame.loc[:,dBegin:dEnd].columns))      # Index random headers
+        for s in uniqSites:
+            siteIdx = dFrame.loc[:, 'Site'] == s
+            nBefore, bBefore = np.histogram(data[siteIdx.values, plotIdx],      # Bin count before
+                                           bins=nBins,
+                                           density=True)
+            nAfter, bAfter = np.histogram(cData[siteIdx.values, plotIdx],       # Bin count after
+                                         bins=nBins,
+                                         density=True)
+
+            mBefore = np.zeros((nBins,))
+            mAfter = np.zeros((nBins,))
+            for i  in range(len(bBefore)-1):                                    # Get median of bin edges
+                mBefore[i] = np.median([bBefore[i], bBefore[i + 1]])            # Median of bin edges (before)
+                mAfter[i] = np.median([bAfter[i], bAfter[i + 1]])               # Median of bin edges (after)
+
+            siteIdx = dFrame.loc[:,'Site'] == s                                 # Extract data for a site
+            muBefore = np.mean(data[siteIdx.values, plotIdx])
+            muAfter = np.mean(cData[siteIdx.values, plotIdx])
+            stdBefore = np.std(data[siteIdx.values, plotIdx])
+            stdAfter = np.std(cData[siteIdx.values, plotIdx])
+            yBefore = scipy.stats.norm.pdf(mBefore, muBefore, stdBefore)
+            yAfter = scipy.stats.norm.pdf(mAfter, muAfter, stdAfter)
+            axsIdx.plot(mBefore, yBefore,                                 # Plot on subplot(axsIdx) before
+                              color='#3a4750',
+                              alpha=0.25)
+
+            axsIdx.plot(mAfter, yAfter,                                   # Plot on subplot(axsIdx) after
+                              color='#d72323',
+                              alpha=0.25)
+            axsIdx.set(xlabel = dFrame.loc[:, dBegin:dEnd].columns[plotIdx].upper())
+
+
+            # muBefore = np.mean(data[siteIdx.values, plotIdx])
+            # muAfter = np.mean(cData[siteIdx.values, plotIdx])
+            # stdBefore = np.std(data[siteIdx.values, plotIdx])
+            # stdAfter = np.std(cData[siteIdx.values, plotIdx])
+            # yBefore = scipy.stats.norm.pdf(bBefore, muBefore, stdBefore)
+            # yAfter = scipy.stats.norm.pdf(bAfter, muAfter, stdAfter)
+            # axs[0] = plt.plot(bBefore, yBefore,
+            #                   color='#8c8c8c',
+            #                   alpha=0.5)
+            # axs[1] = plt.plot(bAfter, yAfter,
+            #                   color='#d11141',
+
+            #                   alpha=0.5)
+            # axs[0] = plt.hist(data.iloc[siteIdx.values, 0], bins=20, density=True)
+            # axs[1] = plt.hist(cData[siteIdx.values, 0], bins=20, density=True)
+    fig.legend(['Before ComBat', 'After ComBat'],                           # Legend
+               loc = 'lower center',
+               fancybox=True,
+               shadow=True,
+               bbox_to_anchor=(0.5,-0.1))
+plt.savefig(savePathComBat, dpi=600)
+
+
