@@ -76,18 +76,20 @@ else:
     print('...skip fill missing')
 
 # Run combat
-cData = neuroCombat(data=dFrame.loc[:,dBegin:dEnd],
-                      covars=dFrame.loc[:,cBegin:cEnd],
-                      batch_col=batchVar,
-                      discrete_cols=discreteVar,
-                      continuous_cols=continuousVar)
+if harmonize:
+    cData = neuroCombat(data=dFrame.loc[:,dBegin:dEnd],
+                          covars=dFrame.loc[:,cBegin:cEnd],
+                          batch_col=batchVar,
+                          discrete_cols=discreteVar,
+                          continuous_cols=continuousVar)
 
 data = np.array(dFrame.loc[:, dBegin:dEnd])     # Preserve non-harmonized data
 
 # Scale data
 scaler = StandardScaler()   # Initialize scaler
 if scaleData:
-    cData = scaler.fit_transform(cData)
+    if harmonize:
+        cData = scaler.fit_transform(cData)
     data = scaler.fit_transform(data)
 
 
