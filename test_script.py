@@ -35,18 +35,18 @@ def classfill(dFrame, classCol, siteCol, idxRange):
     """
     uniqClass = dFrame[classCol].unique()                   # All unique classes
     uniqSites = dFrame[siteCol].unique()                    # All unique sites
-    print('...found ' + str(uniqClass.size) + ' classes across ' + str(uniqSite.size) + ' sites')
+    print('...found ' + str(uniqClass.size) + ' classes across ' + str(uniqSites.size) + ' sites')
     print('...filling missing data with class means')
     data = dFrame.loc[:, idxRange[0]:idxRange[1]]           # Extract all numerical value from 'dBegin' onwards
     for site in uniqSites:
         siteIdx = dFrame.loc[:, siteCol] == site            # Index where site is uniqSite = site
         for cls in uniqClass:
             classIdx = dFrame.loc[:, classCol] == cls       # Index where class is uniqClass = cls
-            idx = np.multiply(siteIdx, classIdx)            # Index where both class and site indexes are true
+            idx = siteIdx & classIdx                        # Index where both class and site indexes are true
             for col in range(len(data.columns)):            # Iterate along each column
                 nanIdx = data.iloc[: ,col].isnull()         # Index where NaNs occur per feature
-                nanIdx_i = np.multiply(nanIdx, idx)         # Index where NaNs occur per feauture, per site, per class
-                if np.sum(nanIdx_i) >= 1:
+                nanIdx_i = nanIdx & idx                     # Index where NaNs occur per feauture, per site, per class
+                if np.sum(nanIdx_i) > 0:
                     mean = np.nanmean(data.iloc[:, col][idx]) # Compute mean of non-NaNs# If there are any Nans...
                     data.iloc[:, col][nanIdx_i] = mean      # Replace NaNs with mean
     dFrame.loc[:, idxRange[0]:idxRange[1]] = data           # Substitute dataframe with corrected data
@@ -75,9 +75,10 @@ if harmonize:
 
 # Load Files
 csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
-dFrame = pd.read_csv(csvPath)           # Dataframe
+dFrame = pd.read_csv(csvPath)           # Create Dataframe
+
 if fillmissing:
-    dFrame = classfill(dFrame, classCol, [dBegin, dEnd])
+    dFrame = classfill(dFrame, classCol, siteCol, [dBegin, dEnd])
 else:
     print('...skip fill missing')
 
