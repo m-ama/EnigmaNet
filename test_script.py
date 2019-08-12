@@ -3,8 +3,7 @@ import pandas as pd
 from neuroCombat import neuroCombat
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import cohen_kappa_score
+import sklearn.metrics as skm
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.callbacks import EarlyStopping
@@ -63,8 +62,8 @@ fillmissing = True          # Fill missing?
 harmonize = True            # Run ComBat harmonization?
 scaleData = True            # Rescale data?
 dataSplit = 0.10            # Percent of data to remove for validation
-nEpochs = 1000              # Training number of epochs
-bSize = 30                  # Training batch size
+nEpochs = 200              # Training number of epochs
+bSize = 40                  # Training batch size
 plotType = 'Normal'         # Type of ComBat graphs to save ('Histogram' or 'Normal')
 
 # Combat Variables
@@ -105,7 +104,6 @@ if scaleData:
 # Produce corrected dataframe
 dFrame.loc[:, dBegin:dEnd] = cData
 dFrame.to_csv('/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/ComBat.csv')
-
 
 # Split into training and validation sets and scale
 if harmonize:
@@ -152,11 +150,21 @@ history = model.fit(dataIn, labelsIn,
 y_pred = model.predict(X_test)
 y_pred = (y_pred > 0.5)
 # Making the Confusion Matrix
-cm = confusion_matrix(y_test, y_pred)
-print(cm)
-print("Test accuracy is {}%".format(((cm[0][0] + cm[1][1])/np.sum(cm))*100))
-kappa = cohen_kappa_score(y_test, y_pred)
-print('Cohen' + """'""" + 's Kappa = ' + str(kappa))
+cm = skm.confusion_matrix(y_test, y_pred)
+accuracy = skm.accuracy_score(y_test, y_pred)
+precision = skm.precision_score(y_test, y_pred)
+recall = skm.recall_score(y_test, y_pred)
+kappa = skm.cohen_kappa_score(y_test, y_pred)
+resultStr = '''----------Validation Results----------
+Confusion Matrix: 
+{0}
+    Accuracy:  {1:0.2f}%
+    Precision: {2:0.2f}%
+    Recall:    {3:0.2f}%
+    Kappa:     {4:0.2f}%
+--------------------------------------
+'''.format(np.array(cm), accuracy*100, precision*100, recall*100, kappa*100)
+print(resultStr)
 
 # Form Graph Path
 pwd = os.getcwd()
