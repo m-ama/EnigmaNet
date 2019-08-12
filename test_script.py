@@ -109,10 +109,15 @@ dFrame.to_csv('/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/ComBat.csv')
 
 # Split into training and validation sets and scale
 if harmonize:
-    X_train, X_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classCol], test_size=dataSplit, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classCol],
+                                                        test_size=dataSplit,
+                                                        random_state=42,
+                                                        stratify=dFrame.loc[:, classCol])
 else:
-    X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classCol], test_size=dataSplit, random_state=0)
-
+    X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classCol],
+                                                        test_size=dataSplit,
+                                                        random_state=42,
+                                                        stratify=dFrame.loc[:, classCol])
 
 # sc = StandardScaler()
 # X_train = sc.fit_transform(X_train)
