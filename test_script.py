@@ -77,6 +77,9 @@ if harmonize:
 csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
 dFrame = pd.read_csv(csvPath)           # Create Dataframe
 
+# Integrity check
+print('Found classes: ' + str(dFrame.loc[:, 'Dx'].unique()))
+
 if fillmissing:
     dFrame = classfill(dFrame, classCol, siteCol, [dBegin, dEnd])
 else:
