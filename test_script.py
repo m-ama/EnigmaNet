@@ -14,14 +14,16 @@ import scipy.stats
 import random
 import os
 
-def classfill(dFrame, classSel, idxRange):
+def classfill(dFrame, classCol, siteCol, idxRange):
     """Fills missing values with means of a class
     
     Inputs
     ------
     dFrame:   Pandas dataframe to process (type: dataframe)
             
-    classSel: String indicating dataframe column name containing class information
+    classCol: String indicating dataframe column name containing class information
+
+    siteCol:  String indicating dataframc column name containing class information
     
     idxRange: 2x1 vector indicating lower and upper bound of data to fill in dataframe
               idxRange[0] is lower bound
@@ -31,24 +33,28 @@ def classfill(dFrame, classSel, idxRange):
     -------
     data:     Dataframe will all missing values filled
     """
-    uniqClass = dFrame[classSel].unique()           # All unique classes
-    print('...found ' + str(uniqClass.size) + ' classes')
+    uniqClass = dFrame[classCol].unique()                   # All unique classes
+    uniqSites = dFrame[siteCol].unique()                    # All unique sites
+    print('...found ' + str(uniqClass.size) + ' classes across ' + str(uniqSite.size) + ' sites')
     print('...filling missing data with class means')
-    data = dFrame.loc[:, idxRange[0]:idxRange[1]]                 # Extract all numerical value from 'dBegin' onwards
-    for c in uniqClass:
-        classIdx = dFrame.loc[:, classSel] == c     # Index where class is uniqClass = c
-        for n in range(len(data.columns)):
-            nanIdx = data.iloc[:,n].isnull()           # Index missing values
-            # Compute mean of class values without nans
-            # Because a Series of booleans cannot be used to index a dataframe, use the values attribute
-            # to extract a bool array
-            mu = np.nanmean(data.iloc[classIdx.values, n])
-            data.iloc[nanIdx.values, n] = mu
-    dFrame.loc[:,idxRange[0]:idxRange[1]] = data
+    data = dFrame.loc[:, idxRange[0]:idxRange[1]]           # Extract all numerical value from 'dBegin' onwards
+    for site in uniqSites:
+        siteIdx = dFrame.loc[:, siteCol] == site            # Index where site is uniqSite = site
+        for cls in uniqClass:
+            classIdx = dFrame.loc[:, classCol] == cls       # Index where class is uniqClass = cls
+            idx = np.multiply(siteIdx, classIdx)            # Index where both class and site indexes are true
+            for col in range(len(data.columns)):            # Iterate along each column
+                nanIdx = data.iloc[: ,col].isnull()         # Index where NaNs occur per feature
+                nanIdx_i = np.multiply(nanIdx, idx)         # Index where NaNs occur per feauture, per site, per class
+                if np.sum(nanIdx_i) >= 1:
+                    mean = np.nanmean(data.iloc[:, col][idx]) # Compute mean of non-NaNs# If there are any Nans...
+                    data.iloc[:, col][nanIdx_i] = mean      # Replace NaNs with mean
+    dFrame.loc[:, idxRange[0]:idxRange[1]] = data           # Substitute dataframe with corrected data
     return dFrame
 
 # Init Variables
-classSel = 'Dx'             # Class labels
+classCol = 'Dx'             # Class labels
+siteCol = 'Site'            # Site or scanner column name
 dBegin = 'ICV'              # Column where data begins
 dEnd = 'R_insula_surfavg'   # Column where data ends
 cBegin = 'Site'             # Column where covariates/demographics begin
@@ -57,21 +63,21 @@ fillmissing = True          # Fill missing?
 harmonize = True            # Run ComBat harmonization?
 scaleData = True            # Rescale data?
 dataSplit = 0.10            # Percent of data to remove for validation
-nEpochs = 500               # Training number of epochs
-bSize = 50                  # Training batch size
+nEpochs = 1000              # Training number of epochs
+bSize = 30                  # Training batch size
 plotType = 'Normal'         # Type of ComBat graphs to save ('Histogram' or 'Normal')
 
 # Combat Variables
 if harmonize:
     batchVar = 'Site'           # Batch effect variable
-    discreteVar = ['Dx','Sex']  # Variables which are categorical that you want to predict
+    discreteVar = ['Dx', 'Sex']  # Variables which are categorical that you want to predict
     continuousVar = ['Age']     # Variables which are continuous that you want to predict
 
 # Load Files
 csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
 dFrame = pd.read_csv(csvPath)           # Dataframe
 if fillmissing:
-    dFrame = classfill(dFrame, classSel, [dBegin, dEnd])
+    dFrame = classfill(dFrame, classCol, [dBegin, dEnd])
 else:
     print('...skip fill missing')
 
@@ -92,12 +98,16 @@ if scaleData:
         cData = scaler.fit_transform(cData)
     data = scaler.fit_transform(data)
 
+# Produce corrected dataframe
+dFrame.loc[:, dBegin:dEnd] = cData
+dFrame.to_csv('/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/ComBat.csv')
+
 
 # Split into training and validation sets and scale
 if harmonize:
-    X_train, X_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classSel], test_size=dataSplit, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classCol], test_size=dataSplit, random_state=0)
 else:
-    X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classSel], test_size=dataSplit, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classCol], test_size=dataSplit, random_state=0)
 
 
 # sc = StandardScaler()
@@ -212,7 +222,7 @@ if harmonize:
                                   alpha=0.25)
 
                 if axsNum == 0 or axsNum == 2:
-                    axsIdx.set_ylabel('% OF SUBJECTS',
+                    axsIdx.set_ylabel('NORMALIZED SUBJECTS',
                                       fontsize=6)
 
                 axsIdx.set_xlabel(dFrame.loc[:, dBegin:dEnd].columns[plotIdx].upper(),
