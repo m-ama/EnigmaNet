@@ -3,6 +3,7 @@ import pandas as pd
 from neuroCombat import neuroCombat
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
 import sklearn.metrics as skm
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
@@ -51,7 +52,6 @@ def classfill(dFrame, classCol, siteCol, idxRange):
     dFrame.loc[:, idxRange[0]:idxRange[1]] = data           # Substitute dataframe with corrected data
     return dFrame
 
-
 def minorityclass(dFrame, classCol):
     """Returns the minority class label in a set of binary class labels
     Inputs
@@ -76,6 +76,8 @@ def minorityclass(dFrame, classCol):
     disparity = nClass[majorIdx] - nClass[minorIdx]
     return minorClass, disparity
 
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 # Init Variables
 classCol = 'Dx'             # Class labels
 siteCol = 'Site'            # Site or scanner column name
@@ -96,6 +98,8 @@ if harmonize:
     batchVar = 'Site'           # Batch effect variable
     discreteVar = ['Dx', 'Sex']  # Variables which are categorical that you want to predict
     continuousVar = ['Age']     # Variables which are continuous that you want to predict
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 # Load Files
 csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
@@ -142,9 +146,7 @@ else:
                                                         random_state=42,
                                                         stratify=dFrame.loc[:, classCol])
 
-# sc = StandardScaler()
-# X_train = sc.fit_transform(X_train)
-# X_test = sc.transform(X_test)
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 # Choose whether data/labels or X_Train,y_train
 dataIn = X_train
@@ -171,6 +173,8 @@ history = model.fit(dataIn, labelsIn,
                     verbose=False,
                     callbacks=[TQDMNotebookCallback()])
 
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 # Predicting the Test set results
 y_pred = model.predict(X_test)
 y_pred = (y_pred > 0.5)
@@ -190,6 +194,8 @@ Confusion Matrix:
 --------------------------------------
 '''.format(np.array(cm), accuracy*100, precision*100, recall*100, kappa*100)
 print(resultStr)
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 # Form Graph Path
 pwd = os.getcwd()
