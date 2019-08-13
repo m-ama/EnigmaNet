@@ -100,7 +100,6 @@ if harmonize:
     continuousVar = ['Age']     # Variables which are continuous that you want to predict
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 # Load Files
 csvPath = '/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/all.csv'
 dFrame = pd.read_csv(csvPath)           # Create Dataframe
@@ -134,6 +133,7 @@ if scaleData:
 dFrame.loc[:, dBegin:dEnd] = cData
 dFrame.to_csv('/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/ComBat.csv')
 
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Split into training and validation sets and scale
 if harmonize:
     X_train, X_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classCol],
@@ -145,6 +145,8 @@ else:
                                                         test_size=dataSplit,
                                                         random_state=42,
                                                         stratify=dFrame.loc[:, classCol])
+# Oversample minority class suing SMOTE
+X_train, y_train = SMOTE().fit_resample(X_train, y_train)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
