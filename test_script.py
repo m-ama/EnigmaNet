@@ -8,7 +8,7 @@ import sklearn.metrics as skm
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.callbacks import EarlyStopping
-from keras_tqdm import TQDMNotebookCallback
+from keras_tqdm import TQDMCallback
 import matplotlib.pyplot as plt
 import scipy.stats
 import random
@@ -172,7 +172,7 @@ history = model.fit(dataIn, labelsIn,
                     batch_size=bSize,
                     epochs=nEpochs,
                     verbose=False,
-                    callbacks=[TQDMNotebookCallback()])
+                    callbacks=[TQDMCallback(leave_inner=False, leave_outer=True)])
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
