@@ -77,7 +77,6 @@ def minorityclass(dFrame, classCol):
     return minorClass, disparity
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 # Init Variables
 classCol = 'Dx'             # Class labels
 siteCol = 'Site'            # Site or scanner column name
