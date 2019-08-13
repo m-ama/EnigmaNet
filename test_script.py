@@ -52,7 +52,7 @@ def classfill(dFrame, classCol, siteCol, idxRange):
     return dFrame
 
 
-def minorityclass(dFrame, classCol)
+def minorityclass(dFrame, classCol):
     """Returns the minority class label in a set of binary class labels
     Inputs
     ------
@@ -63,14 +63,18 @@ def minorityclass(dFrame, classCol)
     Returns
     -------
     minorClass: String depicting minor class
+
+    disparity: Integer indicating disparity between minor and major classes
     """
     uniqClass = dFrame[classCol].unique()  # All unique classes
     nClass = np.zeros((uniqClass.shape), dtype=int)
     for i, classVal in enumerate(uniqClass):
         nClass[i] = np.sum(dFrame.loc[:, classCol] == classVal)
-    idx = np.argmin(nClass)
-    minorClass = uniqClass[idx]
-    return minorClass
+    minorIdx = np.argmin(nClass)
+    minorClass = uniqClass[minorIdx]
+    majorIdx = np.argmax(nClass)
+    disparity = nClass[majorIdx] - nClass[minorIdx]
+    return minorClass, disparity
 
 # Init Variables
 classCol = 'Dx'             # Class labels
