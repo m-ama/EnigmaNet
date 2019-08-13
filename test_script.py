@@ -51,6 +51,27 @@ def classfill(dFrame, classCol, siteCol, idxRange):
     dFrame.loc[:, idxRange[0]:idxRange[1]] = data           # Substitute dataframe with corrected data
     return dFrame
 
+
+def minorityclass(dFrame, classCol)
+    """Returns the minority class label in a set of binary class labels
+    Inputs
+    ------
+    dFrame: Pandas Dataframe containing tabular data
+
+    classCol: Column label containing class information (string)
+
+    Returns
+    -------
+    minorClass: String depicting minor class
+    """
+    uniqClass = dFrame[classCol].unique()  # All unique classes
+    nClass = np.zeros((uniqClass.shape), dtype=int)
+    for i, classVal in enumerate(uniqClass):
+        nClass[i] = np.sum(dFrame.loc[:, classCol] == classVal)
+    idx = np.argmin(nClass)
+    minorClass = uniqClass[idx]
+    return minorClass
+
 # Init Variables
 classCol = 'Dx'             # Class labels
 siteCol = 'Site'            # Site or scanner column name
