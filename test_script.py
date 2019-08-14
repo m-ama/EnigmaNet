@@ -1,14 +1,22 @@
-import numpy as np
-import pandas as pd
-from neuroCombat import neuroCombat
+# SKLearn items
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 import sklearn.metrics as skm
+# Keras items
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
+from keras.activations import relu, elu
+from keras.optimizers import Adam, Nadam
+from keras.losses import binary_crossentropy
 from keras.callbacks import EarlyStopping
 from keras_tqdm import TQDMCallback
+import talos as ta
+from talos.metrics.keras_metrics import fmeasure_acc
+# Other items
+import numpy as np
+import pandas as pd
+from neuroCombat import neuroCombat
 import matplotlib.pyplot as plt
 import scipy.stats
 import random
@@ -16,15 +24,15 @@ import os
 
 def classfill(dFrame, classCol, siteCol, idxRange):
     """Fills missing values with means of a class
-    
+
     Inputs
     ------
     dFrame:   Pandas dataframe to process (type: dataframe)
-            
+
     classCol: String indicating dataframe column name containing class information
 
     siteCol:  String indicating dataframc column name containing class information
-    
+
     idxRange: 2x1 vector indicating lower and upper bound of data to fill in dataframe
               idxRange[0] is lower bound
               idxRange[1] is upper bound
@@ -87,7 +95,7 @@ cEnd = 'Sex'                # Column where covariates/demographics end
 fillmissing = True          # Fill missing?
 harmonize = True            # Run ComBat harmonization?
 scaleData = True            # Rescale data?
-dataSplit = 0.10            # Percent of data to remove for validation
+dataSplit = 0.50            # Percent of data to remove for validation
 nEpochs = 200              # Training number of epochs
 bSize = 40                  # Training batch size
 plotType = 'Normal'         # Type of ComBat graphs to save ('Histogram' or 'Normal')
@@ -148,34 +156,64 @@ else:
 X_train, y_train = SMOTE().fit_resample(X_train, y_train)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Construct NN model function
+def EnigmaNet(X_train, y_train, X_test, Y_test, params):
+    # Initialising the ANN
+    model = Sequential()
 
-# Choose whether data/labels or X_Train,y_train
-dataIn = X_train
-labelsIn = y_train
+    # Add initial layer
+    model.add(Dense(params['first_neuron'], input_dim=X_train.shape[1],
+                    activation=params['activation'],
+                    kernel_initializer=params['kernel_initializer']))
 
-# Initialising the ANN
-model = Sequential()
+    # Adding dropout to prevent overfitting
+    model.add(Dropout(params['dropout']))
 
-# Adding the Single Perceptron or Shallow network
-model.add(Dense(output_dim=64, init='uniform', activation='relu', input_dim=dataIn.shape[1]))
-# Adding dropout to prevent overfitting
-model.add(Dropout(p=0.1))
-# Adding hidden layers
-model.add(Dense(60, input_dim=60, kernel_initializer='normal', activation='relu'))
-# Adding the output layer
-model.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
-# criterion loss and optimizer
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-# Fitting the ANN to the Training set
-early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-history = model.fit(dataIn, labelsIn,
-                    batch_size=bSize,
-                    epochs=nEpochs,
-                    verbose=False,
-                    callbacks=[TQDMCallback(leave_inner=False, leave_outer=True)])
+    # Adding hidden layers
+    model.add(Dense(1, activation=params['last_activation'],
+                    kernel_initializer=params['kernel_initializer']))
+
+    # Adding the output layer
+    model.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
+
+    # criterion loss and optimizer
+    model.compile(loss=params['losses'],
+                  optimizer=params['optimizer'](),
+                  metrics=['acc', fmeasure_acc])
+
+    # Fitting the ANN to the Training set
+    early_stopping = EarlyStopping(monitor='val_loss', patience=2)
+    history = model.fit(X_train, y_train,
+                        validation_data=[X_test, Y_test],
+                        batch_size=params['batch_size'],
+                        epochs=params['epochs'],
+                        verbose=False,
+                        callbacks=[TQDMCallback(leave_inner=False, leave_outer=True)])
+    return history, model
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Construct hyperparameter optimization paramaeters
+p = {'first_neuron':[9,10,11],
+     'hidden_layers':[0, 1, 2],
+     'batch_size': [30],
+     'epochs': [100],
+     'dropout': [0],
+     'kernel_initializer': ['uniform','normal'],
+     'optimizer': [Nadam, Adam],
+     'losses': [binary_crossentropy],
+     'activation':[relu, elu],
+     'last_activation': ['sigmoid']}
 
+
+# and run the experiment
+t = ta.Scan(x=X_train,
+            y=y_train,
+            model=EnigmaNet,
+            params=p,
+            dataset_name='Enigma_T1',
+            experiment_no='1')
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Predicting the Test set results
 y_pred = model.predict(X_test)
 y_pred = (y_pred > 0.5)
