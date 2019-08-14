@@ -158,6 +158,21 @@ X_train, y_train = SMOTE().fit_resample(X_train, y_train)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Construct NN model function
 def EnigmaNet(X_train, y_train, X_test, Y_test, params):
+    """Constructs Sequential NN model based on Talos optimization parameters
+
+    Inputs
+    ------
+    X_train: Training dataset
+    y_train: Training class labels
+    X_test:  Validation dataset
+    y_test:  Validation class labels
+    params:  Talos gridsearch parameters
+    
+    Returns
+    -------
+    model:   Sequential model based on input parameters
+    history: Fitted model based on training set
+    """"
     # Initialising the ANN
     model = Sequential()
 
@@ -205,7 +220,7 @@ p = {'first_neuron':[64, 128, 256],
      'last_activation': ['sigmoid', 'softmax']}
 
 
-# and run the experiment
+# Run Talos with parameters
 t = ta.Scan(x=X_train,
             y=y_train,
             model=EnigmaNet,
@@ -213,6 +228,8 @@ t = ta.Scan(x=X_train,
             dataset_name='Enigma_T1',
             experiment_no='1',
             grid_downsample=0.01)
+
+
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Predicting the Test set results
