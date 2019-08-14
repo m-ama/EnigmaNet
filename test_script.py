@@ -95,10 +95,12 @@ cEnd = 'Sex'                # Column where covariates/demographics end
 fillmissing = True          # Fill missing?
 harmonize = True            # Run ComBat harmonization?
 scaleData = True            # Rescale data?
-dataSplit = 0.50            # Percent of data to remove for validation
-nEpochs = 200              # Training number of epochs
-bSize = 40                  # Training batch size
+dataSplit = 0.10            # Percent of data to remove for validation
+nEpochs = 250               # Training number of epochs
+bSize = 30                  # Training batch size
 plotType = 'Normal'         # Type of ComBat graphs to save ('Histogram' or 'Normal')
+talosName = 'Enigma_T1'     # Talos dataset name
+talosN = '2'                # Talos experiment number
 
 # Combat Variables
 if harmonize:
@@ -225,12 +227,17 @@ t = ta.Scan(x=X_train,
             y=y_train,
             model=EnigmaNet,
             params=p,
-            dataset_name='Enigma_T1',
-            experiment_no='1',
-            grid_downsample=0.01)
+            dataset_name=talosName,
+            experiment_no=talosN,
+            grid_downsample=0.050,
+            random_method='quantum')
 
-
-
+# Open results CSV file
+rep = ta.Reporting(t)
+# get the highest result ('val_acc' by default)
+rep.high()
+# get the round with the best result
+rep.rounds2high()
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Predicting the Test set results
 y_pred = model.predict(X_test)
