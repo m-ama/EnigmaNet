@@ -193,16 +193,16 @@ def EnigmaNet(X_train, y_train, X_test, Y_test, params):
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Construct hyperparameter optimization paramaeters
-p = {'first_neuron':[9,10,11],
+p = {'first_neuron':[64, 128, 256],
      'hidden_layers':[0, 1, 2],
-     'batch_size': [30],
-     'epochs': [100],
-     'dropout': [0],
-     'kernel_initializer': ['uniform','normal'],
+     'batch_size': [20, 30 , 40 , 50],
+     'epochs': [100, 200, 500, 1000],
+     'dropout': [0, 0.2, 0.5, 1],
+     'kernel_initializer': ['uniform', 'normal'],
      'optimizer': [Nadam, Adam],
      'losses': [binary_crossentropy],
      'activation':[relu, elu],
-     'last_activation': ['sigmoid']}
+     'last_activation': ['sigmoid', 'softmax']}
 
 
 # and run the experiment
@@ -211,7 +211,8 @@ t = ta.Scan(x=X_train,
             model=EnigmaNet,
             params=p,
             dataset_name='Enigma_T1',
-            experiment_no='1')
+            experiment_no='1',
+            grid_downsample=0.01)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Predicting the Test set results
