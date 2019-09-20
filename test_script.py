@@ -139,34 +139,34 @@ if scaleData:
     data = scaler.fit_transform(data)
 
 # Produce corrected dataframe
-dFrame.loc[:, dBegin:dEnd] = cData
+dFrame.loc[:, dBegin:dEnd] = data
 dFrame.to_csv('/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/ComBat.csv')
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Split into training and validation sets and scale
 if harmonize:
-    X_train, X_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classCol],
+    x_train, x_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classCol],
                                                         test_size=dataSplit,
                                                         random_state=42,
                                                         stratify=dFrame.loc[:, classCol])
 else:
-    X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classCol],
+    x_train, x_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classCol],
                                                         test_size=dataSplit,
                                                         random_state=42,
                                                         stratify=dFrame.loc[:, classCol])
 # Oversample minority class suing SMOTE
-X_train, y_train = SMOTE().fit_resample(X_train, y_train)
+x_train, y_train = SMOTE().fit_resample(x_train, y_train)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Construct NN model function
-def EnigmaNet(X_train, y_train, X_test, Y_test, params):
+def EnigmaNet(x_train, y_train, x_test, y_test, params):
     """Constructs Sequential NN model based on Talos optimization parameters
 
     Inputs
     ------
-    X_train: Training dataset
+    x_train: Training dataset
     y_train: Training class labels
-    X_test:  Validation dataset
+    x_test:  Validation dataset
     y_test:  Validation class labels
     params:  Talos gridsearch parameters
     
@@ -174,12 +174,12 @@ def EnigmaNet(X_train, y_train, X_test, Y_test, params):
     -------
     model:   Sequential model based on input parameters
     history: Fitted model based on training set
-    """"
+    """
     # Initialising the ANN
     model = Sequential()
 
     # Add initial layer
-    model.add(Dense(params['first_neuron'], input_dim=X_train.shape[1],
+    model.add(Dense(params['first_neuron'], input_dim=x_train.shape[1],
                     activation=params['activation'],
                     kernel_initializer=params['kernel_initializer']))
 
@@ -200,8 +200,8 @@ def EnigmaNet(X_train, y_train, X_test, Y_test, params):
 
     # Fitting the ANN to the Training set
     early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-    history = model.fit(X_train, y_train,
-                        validation_data=[X_test, Y_test],
+    history = model.fit(x_train, y_train,
+                        validation_data=[x_test, y_test],
                         batch_size=params['batch_size'],
                         epochs=params['epochs'],
                         verbose=False,
@@ -223,14 +223,13 @@ p = {'first_neuron':[64, 128, 256],
 
 
 # Run Talos with parameters
-t = ta.Scan(x=X_train,
+t = ta.Scan(x=x_train,
             y=y_train,
             model=EnigmaNet,
             params=p,
             dataset_name=talosName,
             experiment_no=talosN,
-            grid_downsample=0.050,
-            random_method='quantum')
+            grid_downsample=0.050)
 
 # Open results CSV file
 rep = ta.Reporting(t)
@@ -240,7 +239,7 @@ rep.high()
 rep.rounds2high()
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Predicting the Test set results
-y_pred = model.predict(X_test)
+y_pred = model.predict(x_test)
 y_pred = (y_pred > 0.5)
 # Making the Confusion Matrix
 cm = skm.confusion_matrix(y_test, y_pred)
