@@ -1,14 +1,22 @@
-import numpy as np
-import pandas as pd
-from neuroCombat import neuroCombat
+# SKLearn items
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 import sklearn.metrics as skm
+# Keras items
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
+from keras.activations import relu, elu
+from keras.optimizers import Adam, Nadam
+from keras.losses import binary_crossentropy
 from keras.callbacks import EarlyStopping
 from keras_tqdm import TQDMCallback
+import talos as ta
+from talos.metrics.keras_metrics import fmeasure_acc
+# Other items
+import numpy as np
+import pandas as pd
+from neuroCombat import neuroCombat
 import matplotlib.pyplot as plt
 import scipy.stats
 import random
@@ -16,15 +24,15 @@ import os
 
 def classfill(dFrame, classCol, siteCol, idxRange):
     """Fills missing values with means of a class
-    
+
     Inputs
     ------
     dFrame:   Pandas dataframe to process (type: dataframe)
-            
+
     classCol: String indicating dataframe column name containing class information
 
     siteCol:  String indicating dataframc column name containing class information
-    
+
     idxRange: 2x1 vector indicating lower and upper bound of data to fill in dataframe
               idxRange[0] is lower bound
               idxRange[1] is upper bound
@@ -88,9 +96,11 @@ fillmissing = True          # Fill missing?
 harmonize = True            # Run ComBat harmonization?
 scaleData = True            # Rescale data?
 dataSplit = 0.10            # Percent of data to remove for validation
-nEpochs = 200              # Training number of epochs
-bSize = 40                  # Training batch size
+nEpochs = 250               # Training number of epochs
+bSize = 30                  # Training batch size
 plotType = 'Normal'         # Type of ComBat graphs to save ('Histogram' or 'Normal')
+talosName = 'Enigma_T1'     # Talos dataset name
+talosN = '2'                # Talos experiment number
 
 # Combat Variables
 if harmonize:
@@ -129,55 +139,107 @@ if scaleData:
     data = scaler.fit_transform(data)
 
 # Produce corrected dataframe
-dFrame.loc[:, dBegin:dEnd] = cData
+dFrame.loc[:, dBegin:dEnd] = data
 dFrame.to_csv('/Users/sid/Documents/Projects/Enigma-ML/Dataset/T1/ComBat.csv')
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Split into training and validation sets and scale
 if harmonize:
-    X_train, X_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classCol],
+    x_train, x_test, y_train, y_test = train_test_split(cData, dFrame.loc[:, classCol],
                                                         test_size=dataSplit,
                                                         random_state=42,
                                                         stratify=dFrame.loc[:, classCol])
 else:
-    X_train, X_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classCol],
+    x_train, x_test, y_train, y_test = train_test_split(data, dFrame.loc[:, classCol],
                                                         test_size=dataSplit,
                                                         random_state=42,
                                                         stratify=dFrame.loc[:, classCol])
 # Oversample minority class suing SMOTE
-X_train, y_train = SMOTE().fit_resample(X_train, y_train)
+x_train, y_train = SMOTE().fit_resample(x_train, y_train)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Construct NN model function
+def EnigmaNet(x_train, y_train, x_test, y_test, params):
+    """Constructs Sequential NN model based on Talos optimization parameters
 
-# Choose whether data/labels or X_Train,y_train
-dataIn = X_train
-labelsIn = y_train
+    Inputs
+    ------
+    x_train: Training dataset
+    y_train: Training class labels
+    x_test:  Validation dataset
+    y_test:  Validation class labels
+    params:  Talos gridsearch parameters
+    
+    Returns
+    -------
+    model:   Sequential model based on input parameters
+    history: Fitted model based on training set
+    """
+    # Initialising the ANN
+    model = Sequential()
 
-# Initialising the ANN
-model = Sequential()
+    # Add initial layer
+    model.add(Dense(params['first_neuron'], input_dim=x_train.shape[1],
+                    activation=params['activation'],
+                    kernel_initializer=params['kernel_initializer']))
 
-# Adding the Single Perceptron or Shallow network
-model.add(Dense(output_dim=64, init='uniform', activation='relu', input_dim=dataIn.shape[1]))
-# Adding dropout to prevent overfitting
-model.add(Dropout(p=0.1))
-# Adding hidden layers
-model.add(Dense(60, input_dim=60, kernel_initializer='normal', activation='relu'))
-# Adding the output layer
-model.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
-# criterion loss and optimizer
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-# Fitting the ANN to the Training set
-early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-history = model.fit(dataIn, labelsIn,
-                    batch_size=bSize,
-                    epochs=nEpochs,
-                    verbose=False,
-                    callbacks=[TQDMCallback(leave_inner=False, leave_outer=True)])
+    # Adding dropout to prevent overfitting
+    model.add(Dropout(params['dropout']))
+
+    # Adding hidden layers
+    model.add(Dense(1, activation=params['last_activation'],
+                    kernel_initializer=params['kernel_initializer']))
+
+    # Adding the output layer
+    model.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
+
+    # criterion loss and optimizer
+    model.compile(loss=params['losses'],
+                  optimizer=params['optimizer'](),
+                  metrics=['acc', fmeasure_acc])
+
+    # Fitting the ANN to the Training set
+    early_stopping = EarlyStopping(monitor='val_loss', patience=2)
+    history = model.fit(x_train, y_train,
+                        validation_data=[x_test, y_test],
+                        batch_size=params['batch_size'],
+                        epochs=params['epochs'],
+                        verbose=False,
+                        callbacks=[TQDMCallback(leave_inner=False, leave_outer=True)])
+    return history, model
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Construct hyperparameter optimization paramaeters
+p = {'first_neuron':[64, 128, 256],
+     'hidden_layers':[0, 1, 2],
+     'batch_size': [20, 30 , 40 , 50],
+     'epochs': [100, 200, 500, 1000],
+     'dropout': [0, 0.2, 0.5, 1],
+     'kernel_initializer': ['uniform', 'normal'],
+     'optimizer': [Nadam, Adam],
+     'losses': [binary_crossentropy],
+     'activation':[relu, elu],
+     'last_activation': ['sigmoid', 'softmax']}
 
+
+# Run Talos with parameters
+t = ta.Scan(x=x_train,
+            y=y_train,
+            model=EnigmaNet,
+            params=p,
+            dataset_name=talosName,
+            experiment_no=talosN,
+            grid_downsample=0.050)
+
+# Open results CSV file
+rep = ta.Reporting(t)
+# get the highest result ('val_acc' by default)
+rep.high()
+# get the round with the best result
+rep.rounds2high()
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Predicting the Test set results
-y_pred = model.predict(X_test)
+y_pred = model.predict(x_test)
 y_pred = (y_pred > 0.5)
 # Making the Confusion Matrix
 cm = skm.confusion_matrix(y_test, y_pred)
