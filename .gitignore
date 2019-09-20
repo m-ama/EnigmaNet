@@ -1,0 +1,7 @@
+# Folders to ignore
+.idea/
+.ipynb_checkpoints/
+__pycache__/
+
+# Files to ignore
+.DS_Store
