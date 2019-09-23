@@ -38,4 +38,19 @@ class enigmanet(object):
         self.scale = scale
         self.splitdata = splitdata
 
-    def tf
+    def readfile(self, path):
+        """Reads input Excel path into a Pandas dataframe and performs
+        initial integrity check. Data is loaded into the object itself
+        as enigmanet.dFrame
+
+        Parameters
+        ----------
+        path: string definition absolute location of Excel file
+
+        Returns
+        -------
+        (None)"""
+        # Load Files
+        dFrame = pd.read_csv(path)  # Create Dataframe
+        # Integrity check
+        print('Found classes: ' + str(dFrame.loc[:, classcol].unique()))
