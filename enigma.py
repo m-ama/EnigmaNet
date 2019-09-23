@@ -2,8 +2,6 @@ import os
 import logging
 from transformations import enigmatransforms as trans
 
-
-
 class enigmanet(object):
     """
     The enigmanet object contains all functions and information of
@@ -20,7 +18,7 @@ class enigmanet(object):
                  scale=True,
                  splitdata=0.10):
         if os.path.exists(path):
-            self.dFrame = pd.read_csv(path)  # Create Dataframe
+            self.dFrame = self.readfile(path)
         else:
             assert isinstance(imPath, object)
         if classcol is None:
