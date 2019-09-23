@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 def classfill(dFrame, classCol, siteCol, idxRange):
     """Fills missing values with means of a class
 
