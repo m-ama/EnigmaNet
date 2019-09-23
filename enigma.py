@@ -1,5 +1,6 @@
 import os
 import logging
+import transformations as tf
 
 
 
@@ -36,4 +37,5 @@ class enigmanet(object):
         self.fillmissing = fillmissing
         self.scale = scale
         self.splitdata = splitdata
-        
+
+    def tf
