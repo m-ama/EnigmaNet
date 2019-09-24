@@ -22,7 +22,7 @@ class enigmanet(object):
                  scale=True,
                  splitdata=0.10):
         if os.path.exists(path):
-            self.dFrame = pd.read_csv(path)  # Create Dataframe
+            self.dframe = pd.read_csv(path)  # Create Dataframe
             # Integrity check
             print(
                 'Found classes: ' + str(dFrame.loc[:, classcol].unique()))
