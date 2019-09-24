@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import pandas as pd
+import numpy as np
+from neuroCombat import neuroCombat
+
 def classfill(dFrame, classCol, siteCol, idxRange):
     """Fills missing values with means of a class
 
@@ -62,3 +66,32 @@ def minorityclass(dFrame, classCol):
     majorIdx = np.argmax(nClass)
     disparity = nClass[majorIdx] - nClass[minorIdx]
     return minorClass, disparity
+
+def combat(dFrame, drange, crange, batch, discrete, continuous):
+    """Returns ComBat-corrected Pandas data frame
+
+    Parameters
+    ----------
+    dFrame:     input Pandas dataframe to correct
+    drange:     1 x 2 list containing range of columns where data begins
+                and ends in the Pandas dataframe
+    crange:     1 x 2 list containing range of columns containing
+                demographics
+    batch:      string
+                batch effect variable (eg. 'site')
+    discrete:   string or list of strings
+                variables which are categorical that you want to predict
+    continuous: string or list of strings
+                string or list of strings
+
+    Returns
+    -------
+    dFrame:     ComBat-harmonized Pandas dataframe
+    """
+    cData = neuroCombat(data=dFrame.loc[:,drange[0]:drange[1]],
+                          covars=dFrame.loc[:,crange[0]:crange[1]],
+                          batch_col=batch,
+                          discrete_cols=discrete,
+                          continuous_cols=continuous)
+    dFrame.loc[:, drange[0]:drange[1]] = cData
+    return dFrame

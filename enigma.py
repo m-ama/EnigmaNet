@@ -13,19 +13,25 @@ class enigmanet(object):
     enigmanet.dFrame
     """
     def __init__(self,
+                 path=None,
                  classcol=None,
                  sitecol=None,
                  dbegin=None,
                  dend=None,
                  fillmissing=True,
-                 harmonize=True,
+                 harmonize=False,
+                 crange=None,
+                 batch=None,
+                 discrete=None,
+                 continuous=None,
                  scale=True,
-                 splitdata=0.10):
+                 splitdata=0.10,):
         if os.path.exists(path):
             self.dframe = pd.read_csv(path)  # Create Dataframe
             # Integrity check
             print(
-                'Found classes: ' + str(dFrame.loc[:, classcol].unique()))
+                'Found classes: ' + str(self.dframe.loc[:,
+                                        classcol].unique()))
         else:
             assert isinstance(path, object)
         if classcol is None:
@@ -42,11 +48,30 @@ class enigmanet(object):
         self.fillmissing = fillmissing
         self.scale = scale
         self.splitdata = splitdata
+        if harmonize:
+            self.harmonize=True
+            self.crange=crange
+            self.batch=batch
+            self.discrete=discrete
+            self.continuous=continuous
 
     def transformdata(self):
         """Applies transformations to data"""
         if self.fillmissing:
-            self.dFrame = trans.classfill(self.dFrame,
-                                          self.classCol,
-                                          self.siteCol,
-                                          [drange[0], drange[1]])
+            self.dFrame = trans.classfill(dFrame=self.dframe,
+                                          classCol=self.classcol,
+                                          siteCol=self.sitecol,
+                                          idxRange=self.drange)
+        else:
+            print('Skipping fillmissing')
+        if self.harmonize:
+            trans.combat(self.dframe,
+                         drange=self.drange,
+                         crange=self.crange,
+                         batch=self.batch,
+                         discrete=self.discrete,
+                         continuous=self.continuous)
+        else:
+            print('Skipping ComBat harmonization')
+
+
