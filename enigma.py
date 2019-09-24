@@ -65,13 +65,17 @@ class enigmanet(object):
         else:
             print('Skipping fillmissing')
         if self.harmonize:
-            trans.combat(self.dframe,
-                         drange=self.drange,
-                         crange=self.crange,
-                         batch=self.batch,
-                         discrete=self.discrete,
-                         continuous=self.continuous)
+            self.dframe = trans.combat(dFrame=self.dframe,
+                                       drange=self.drange,
+                                       crange=self.crange,
+                                       batch=self.batch,
+                                       discrete=self.discrete,
+                                       continuous=self.continuous)
         else:
             print('Skipping ComBat harmonization')
-
+        if self.scale:
+            self.dframe = trans.scale(dFrame=self.dframe,
+                                      drange=self.drange)
+        else:
+            print('Skipping data scaling')
 

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from neuroCombat import neuroCombat
+from sklearn.preprocessing import StandardScaler
 
 def classfill(dFrame, classCol, siteCol, idxRange):
     """Fills missing values with means of a class
@@ -93,4 +94,22 @@ def combat(dFrame, drange, crange, batch, discrete, continuous):
                           discrete_cols=discrete,
                           continuous_cols=continuous)
     dFrame.loc[:, drange[0]:drange[1]] = cData
+    return dFrame
+
+def scale(dFrame, drange):
+    """Scales data from 0 to 1 for deep learning
+
+    Parameters
+    ----------
+    dFrame: Pandas dataframe containing data to scale
+    crange: 1 x 2 list containing range of columns where data begins
+            and ends in the Pandas dataframe
+
+    Returns
+    -------
+    dFrame: Scaled Pandas dataframe
+    """
+    scaler = StandardScaler()
+    dFrame.loc[:,drange[0]:drange[1]] = scaler.fit_transform(
+        dFrame.loc[:,drange[0]:drange[1]])
     return dFrame
