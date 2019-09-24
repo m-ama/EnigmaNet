@@ -111,6 +111,7 @@ def scale(dFrame, drange):
     -------
     dFrame: Scaled Pandas dataframe
     """
+    print('...scaling data')
     scaler = StandardScaler()
     dFrame.loc[:,drange[0]:drange[1]] = scaler.fit_transform(
         dFrame.loc[:,drange[0]:drange[1]])
@@ -135,6 +136,7 @@ def split(dFrame, classCol, drange, datasplit=0.1):
     y_train:    Split class labels for training
     y_test:     Split class labels for testing
     """
+    print('...splitting data')
     x_train, x_test, y_train, y_test = train_test_split(
         dFrame.loc[:, drange[0]:drange[1]],
         dFrame.loc[:, classCol],
@@ -156,5 +158,6 @@ def oversample(x_train, y_train):
     x_train:    oversampled training dataset
     y_train     oversampled training class labels
     """
+    print('...oversampling data')
     x_train, y_train = SMOTE().fit_resample(x_train, y_train)
     return x_train, y_train
