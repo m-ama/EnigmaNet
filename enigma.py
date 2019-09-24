@@ -1,14 +1,18 @@
 import os
 import logging
+import numpy as np
+import pandas as pd
 from transformations import enigmatransforms as trans
 
 class enigmanet(object):
     """
     The enigmanet object contains all functions and information of
-    training and validating an AI model for epilepsy prediction.
+    training and validating an AI model for epilepsy prediction. Reads
+    input Excel path into a Pandas dataframe and performs initial
+    integrity check. Data is loaded into the object itself as
+    enigmanet.dFrame
     """
     def __init__(self,
-                 path,
                  classcol=None,
                  sitecol=None,
                  dbegin=None,
@@ -18,9 +22,12 @@ class enigmanet(object):
                  scale=True,
                  splitdata=0.10):
         if os.path.exists(path):
-            self.dFrame = self.readfile(path)
+            self.dFrame = pd.read_csv(path)  # Create Dataframe
+            # Integrity check
+            print(
+                'Found classes: ' + str(dFrame.loc[:, classcol].unique()))
         else:
-            assert isinstance(imPath, object)
+            assert isinstance(path, object)
         if classcol is None:
             raise ValueError('Please define the column containing class '
                              'information')
@@ -31,27 +38,10 @@ class enigmanet(object):
                             'harmonization')
         self.classcol = classcol
         self.sitecol = sitecol
-        self.drange = [dBegin, dEnd]
+        self.drange = [dbegin, dend]
         self.fillmissing = fillmissing
         self.scale = scale
         self.splitdata = splitdata
-
-    def readfile(self, path):
-        """Reads input Excel path into a Pandas dataframe and performs
-        initial integrity check. Data is loaded into the object itself
-        as enigmanet.dFrame
-
-        Parameters
-        ----------
-        path: string definition absolute location of Excel file
-
-        Returns
-        -------
-        (None)"""
-        # Load Files
-        self.dFrame = pd.read_csv(path)  # Create Dataframe
-        # Integrity check
-        print('Found classes: ' + str(dFrame.loc[:, classcol].unique()))
 
     def transformdata(self):
         """Applies transformations to data"""
@@ -60,6 +50,3 @@ class enigmanet(object):
                                           self.classCol,
                                           self.siteCol,
                                           [drange[0], drange[1]])
-
-            
-
