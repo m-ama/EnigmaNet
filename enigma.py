@@ -79,10 +79,12 @@ class enigmanet(object):
         else:
             print('Skipping data scaling')
 
-    def splitdata(self):
+    def splitdata(self, oversample=True):
         x_train, x_test, y_train, y_test = trans.split(
             dFrame=self.dframe,
             classCol=self.classcol,
             drange=self.drange,
             datasplit=self.testsplit)
+        if oversample:
+            x_train, y_train = trans.oversample(x_train, y_train)
         return x_train, x_test, y_train, y_test

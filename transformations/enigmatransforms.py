@@ -4,6 +4,7 @@ import numpy as np
 from neuroCombat import neuroCombat
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import SMOTE
 
 def classfill(dFrame, classCol, siteCol, idxRange):
     """Fills missing values with means of a class
@@ -141,3 +142,19 @@ def split(dFrame, classCol, drange, datasplit=0.1):
         random_state=None,
         stratify=dFrame.loc[:, classCol])
     return x_train, x_test, y_train, y_test
+
+def oversample(x_train, y_train):
+    """Oversample the minority class in training dataset using SMOTE
+    
+    Parameters
+    ----------
+    x_train:    training dataset
+    y_train:    training class labels
+    
+    Returns
+    -------
+    x_train:    oversampled training dataset
+    y_train     oversampled training class labels
+    """
+    x_train, y_train = SMOTE().fit_resample(x_train, y_train)
+    return x_train, y_train
