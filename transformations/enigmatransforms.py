@@ -3,6 +3,7 @@
 import numpy as np
 from neuroCombat import neuroCombat
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 def classfill(dFrame, classCol, siteCol, idxRange):
     """Fills missing values with means of a class
@@ -102,7 +103,7 @@ def scale(dFrame, drange):
     Parameters
     ----------
     dFrame: Pandas dataframe containing data to scale
-    crange: 1 x 2 list containing range of columns where data begins
+    drange: 1 x 2 list containing range of columns where data begins
             and ends in the Pandas dataframe
 
     Returns
@@ -113,3 +114,30 @@ def scale(dFrame, drange):
     dFrame.loc[:,drange[0]:drange[1]] = scaler.fit_transform(
         dFrame.loc[:,drange[0]:drange[1]])
     return dFrame
+
+def split(dFrame, classCol, drange, datasplit=0.1):
+    """Splits data into training and testing sets using SciPy. Split
+    is stratified.
+
+    Parameters
+    ----------
+    dFrame:     Pandas dataframe containing data to split
+    drange:     1 x 2 list containing range of columns where data begins
+                and ends in the Pandas dataframe
+    datasplit:  Percentage ranging from 0.0 to 1.0 to represent the
+                amount of data to split for testing. Default: 0.1
+
+    Returns
+    -------
+    x_train:    Split data for training
+    x_test:     Split data for testing
+    y_train:    Split class labels for training
+    y_test:     Split class labels for testing
+    """
+    x_train, x_test, y_train, y_test = train_test_split(
+        dFrame.loc[:, drange[0]:drange[1]],
+        dFrame.loc[:, classCol],
+        test_size=datasplit,
+        random_state=None,
+        stratify=dFrame.loc[:, classCol])
+    return x_train, x_test, y_train, y_test

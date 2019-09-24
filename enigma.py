@@ -25,7 +25,7 @@ class enigmanet(object):
                  discrete=None,
                  continuous=None,
                  scale=True,
-                 splitdata=0.10,):
+                 testsplit=0.10):
         if os.path.exists(path):
             self.dframe = pd.read_csv(path)  # Create Dataframe
             # Integrity check
@@ -47,13 +47,13 @@ class enigmanet(object):
         self.drange = [dbegin, dend]
         self.fillmissing = fillmissing
         self.scale = scale
-        self.splitdata = splitdata
+        self.testsplit = testsplit
         if harmonize:
-            self.harmonize=True
-            self.crange=crange
-            self.batch=batch
-            self.discrete=discrete
-            self.continuous=continuous
+            self.harmonize = True
+            self.crange = crange
+            self.batch = batch
+            self.discrete = discrete
+            self.continuous = continuous
 
     def transformdata(self):
         """Applies transformations to data"""
@@ -79,3 +79,10 @@ class enigmanet(object):
         else:
             print('Skipping data scaling')
 
+    def splitdata(self):
+        x_train, x_test, y_train, y_test = trans.split(
+            dFrame=self.dframe,
+            classCol=self.classcol,
+            drange=self.drange,
+            datasplit=self.testsplit)
+        return x_train, x_test, y_train, y_test
