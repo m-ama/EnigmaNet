@@ -9,53 +9,40 @@ from keras_tqdm import TQDMNotebookCallback
 import talos as ta
 from talos.metrics.keras_metrics import fmeasure_acc
 
-class DenseClassificationModel(object):
-    def __init__(self):
-        # Initialising the ANN
-        self.model = Sequential()
-    def createmodel(x_train, y_train, params):
-        """Constructs Sequential NN model based on Talos optimization parameters
+def createmodel(optimizer='adam',
+                activation='relu',
+                initmode='uniform',
+                dropout=0.2):
+    """Constructs Sequential NN model based on Talos optimization parameters
 
-        Inputs
-        ------
-        x_train     Training dataset
-        y_train     Training class labels
-        params:     Talos gridsearch parameters
+    Inputs
+    ------
+    optimizer:  string | Default: 'adam'
+                optimizer to use for deep learning model
 
-        Returns
-        -------
-        model:      Sequential model based on input parameters
-        history:    Fitted model based on training set
-        """
+    activation: string | Default: 'relu'
+                activation to use for deep learning model
 
+    initmode:   string | Default: 'uniform'
+                type of model initialization
 
-        # Add initial layer
-        model.add(Dense(params['first_neuron'], input_dim=x_train.shape[1],
-                        activation=params['activation'],
-                        kernel_initializer=params['kernel_initializer']))
+    dropout:    float between 0 and 1 | Default: 0.2
+                Dropout rate to apply to layer input
 
-        # Adding dropout to prevent overfitting
-        model.add(Dropout(params['dropout']))
+    Returns
+    -------
+    model:      sequential model based on input parameters
+    """
 
-        # Adding hidden layers
-        model.add(Dense(1, activation=params['last_activation'],
-                        kernel_initializer=params['kernel_initializer']))
+    model = Sequential()
+    model.add(Dense(64,
+                    activation=activation,
+                    kernel_initializer=kernel_initializer))
+    model.add(Dropout(dropout))
+    model.add(Dense(1,activation=activation,
+                    kernel_initializer=kernel_initializer))
 
-        # Adding the output layer
-        model.add(Dense(output_dim=1, init='uniform', activation='sigmoid'))
-
-        # criterion loss and optimizer
-        model.compile(loss=params['losses'],
-                      optimizer=params['optimizer'](),
-                      metrics=['acc', fmeasure_acc])
-
-        # Fitting the ANN to the Training set
-        early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-        history = model.fit(x_train, y_train,
-                            validation_data=[x_test, y_test],
-                            batch_size=params['batch_size'],
-                            epochs=params['epochs'],
-                            verbose=False,
-                            callbacks=[TQDMNotebookCallback(leave_inner=False,
-                                                            leave_outer=True)])
-        return history, model
+    model.compile(loss='binary_crossentropy',
+                  optimizer=optimizer,
+                  metrics=['accuracy'])
+    return model
