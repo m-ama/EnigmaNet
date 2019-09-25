@@ -3,7 +3,7 @@
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras import regularizers
-from keras.optimizers import SGD, Adam, RMSprop
+
 
 def CreateSequentialModel(input_dim=None,
                           optimizer='Adam',
@@ -64,4 +64,3 @@ def CreateSequentialModel(input_dim=None,
                   loss='binary_crossentropy',
                   metrics=['accuracy'])
     return model
-
