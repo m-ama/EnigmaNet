@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
+from keras import regularizers
+from keras.optimizers import SGD, Adam, RMSprop
 
 def CreateSequentialModel(input_dim=None,
                           optimizer='Adam',
-                          learnrate=0.1,
                           activation='relu',
                           initmode='uniform',
                           dropout=0.2,
@@ -44,7 +45,7 @@ def CreateSequentialModel(input_dim=None,
     -------
     model:      sequential model based on input parameters
     """
-    if inputdim is None:
+    if input_dim is None:
         raise Exception('Please enter number of input dimensions to '
                         'initialize a Sequential model')
     model = Sequential()
@@ -56,10 +57,10 @@ def CreateSequentialModel(input_dim=None,
     model.add(Dense(units=units_L2,
                     activation=activation,
                     kernel_initializer=initmode,
-                    kernel_regularizer=l2(L2_reg_penalty)))
+                    kernel_regularizer=regularizers.l2(L2_reg_penalty)))
     model.add(Dense(units=1,
                     activation=activation))
-    model.compile(optimizer=optimizer(learning_rate=learnrate),
+    model.compile(optimizer=optimizer,
                   loss='binary_crossentropy',
                   metrics=['accuracy'])
     return model
