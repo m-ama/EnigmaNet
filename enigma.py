@@ -2,7 +2,7 @@ import os
 import logging
 import numpy as np
 import pandas as pd
-from transformations import enigmatransforms as trans
+from enigmalibrary import enigmatransforms as trans
 
 class enigmanet(object):
     """
