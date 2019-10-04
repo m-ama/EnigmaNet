@@ -6,7 +6,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
 
+DEBUG = False
+
 def classfill(dFrame, classCol, siteCol, idxRange):
+    
     """Fills missing values with means of a class
 
     Inputs
@@ -27,9 +30,13 @@ def classfill(dFrame, classCol, siteCol, idxRange):
     """
     uniqClass = dFrame[classCol].unique()                   # All unique classes
     uniqSites = dFrame[siteCol].unique()                    # All unique sites
-    print('...found ' + str(uniqClass.size) + ' classes across ' + str(uniqSites.size) + ' sites')
-    print('...filling missing data with class means')
+    
+    if DEBUG:
+        print('...found ' + str(uniqClass.size) + ' classes across ' + str(uniqSites.size) + ' sites')
+        print('...filling missing data with class means')
+        
     data = dFrame.loc[:, idxRange[0]:idxRange[1]]           # Extract all numerical value from 'dBegin' onwards
+    
     for site in uniqSites:
         siteIdx = dFrame.loc[:, siteCol] == site            # Index where site is uniqSite = site
         for cls in uniqClass:
@@ -41,7 +48,9 @@ def classfill(dFrame, classCol, siteCol, idxRange):
                 if np.sum(nanIdx_i) > 0:
                     mean = np.nanmean(data.iloc[:, col][idx]) # Compute mean of non-NaNs# If there are any Nans...
                     data.iloc[:, col][nanIdx_i] = mean      # Replace NaNs with mean
+    
     dFrame.loc[:, idxRange[0]:idxRange[1]] = data           # Substitute dataframe with corrected data
+    
     return dFrame
 
 def minorityclass(dFrame, classCol):
@@ -61,12 +70,15 @@ def minorityclass(dFrame, classCol):
     """
     uniqClass = dFrame[classCol].unique()  # All unique classes
     nClass = np.zeros((uniqClass.shape), dtype=int)
+    
     for i, classVal in enumerate(uniqClass):
         nClass[i] = np.sum(dFrame.loc[:, classCol] == classVal)
+    
     minorIdx = np.argmin(nClass)
     minorClass = uniqClass[minorIdx]
     majorIdx = np.argmax(nClass)
     disparity = nClass[majorIdx] - nClass[minorIdx]
+    
     return minorClass, disparity
 
 def combat(dFrame, drange, crange, batch, discrete, continuous):
@@ -95,69 +107,8 @@ def combat(dFrame, drange, crange, batch, discrete, continuous):
                           batch_col=batch,
                           discrete_cols=discrete,
                           continuous_cols=continuous)
+    
     dFrame.loc[:, drange[0]:drange[1]] = cData
+    
     return dFrame
 
-def scale(dFrame, drange):
-    """Scales data from 0 to 1 for deep learning
-
-    Parameters
-    ----------
-    dFrame: Pandas dataframe containing data to scale
-    drange: 1 x 2 list containing range of columns where data begins
-            and ends in the Pandas dataframe
-
-    Returns
-    -------
-    dFrame: Scaled Pandas dataframe
-    """
-    print('...scaling data')
-    scaler = StandardScaler()
-    dFrame.loc[:,drange[0]:drange[1]] = scaler.fit_transform(
-        dFrame.loc[:,drange[0]:drange[1]])
-    return dFrame
-
-def split(dFrame, classCol, drange, datasplit=0.1):
-    """Splits data into training and testing sets using SciPy. Split
-    is stratified.
-
-    Parameters
-    ----------
-    dFrame:     Pandas dataframe containing data to split
-    drange:     1 x 2 list containing range of columns where data begins
-                and ends in the Pandas dataframe
-    datasplit:  Percentage ranging from 0.0 to 1.0 to represent the
-                amount of data to split for testing. Default: 0.1
-
-    Returns
-    -------
-    x_train:    Split data for training
-    x_test:     Split data for testing
-    y_train:    Split class labels for training
-    y_test:     Split class labels for testing
-    """
-    print('...splitting data')
-    x_train, x_test, y_train, y_test = train_test_split(
-        dFrame.loc[:, drange[0]:drange[1]],
-        dFrame.loc[:, classCol],
-        test_size=datasplit,
-        random_state=None,
-        stratify=dFrame.loc[:, classCol])
-    return x_train, x_test, y_train, y_test
-
-def oversample(x_train, y_train):
-    """Oversample the minority class in training dataset using SMOTE
-    
-    Parameters
-    ----------
-    x_train:    training dataset
-    y_train:    training class labels
-    
-    Returns
-    -------
-    x_train:    oversampled training dataset
-    y_train     oversampled training class labels
-    """
-    print('...oversampling data')
-    x_train, y_train = SMOTE().fit_resample(x_train, y_train)
-    return x_train, y_train
