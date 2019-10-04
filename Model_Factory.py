@@ -1,6 +1,5 @@
 from enum import Enum
 
-from DensePredictionModel import DensePredictionModel
 from DenseClassificationModel import DenseClassificationModel
 from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import RobustScaler, MinMaxScaler
