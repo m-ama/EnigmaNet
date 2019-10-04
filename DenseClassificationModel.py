@@ -13,12 +13,12 @@ class DenseClassificationModel:
         self.input_dim = input_dim
         
         
-        self.grid_dict = { 'classifier__learn_rate': [ 0.001, 0.0015, 0.01, 0.015, 0.1, 0.15 ],
-                           'classifier__epochs': [ 25, 50, 75, 100, 150 ],
-                           'classifier__hidden_units_L1': [ 10, 20, 30, 40, 50, 60, 70, 80 ],
-                           'classifier__hidden_units_L2': [ 2, 5, 10, 15, 20 ],
-                           'classifier__l2_reg_penalty': [ 0.01, 0.015, 0.1, 0.15, 0.2 ],
-                           'classifier__drop_out_rate': [ 0.1, 0.2, 0.3 ] }
+        self.grid_dict = { 'classifier__learn_rate': [0.1, 0.15 ],
+                           'classifier__epochs': [ 50, 150 ],
+                           'classifier__hidden_units_L1': [ 10, 20 ],
+                           'classifier__hidden_units_L2': [ 2, 5 ],
+                           'classifier__l2_reg_penalty': [ 0.01, 0.1 ],
+                           'classifier__drop_out_rate': [ 0.1, 0.2 ] }
         
         self.name = 'classifier'
         
