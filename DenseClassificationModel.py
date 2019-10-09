@@ -13,12 +13,12 @@ class DenseClassificationModel:
         self.input_dim = input_dim
         
         
-        self.grid_dict = { 'classifier__learn_rate': [0.1, 0.15 ],
-                           'classifier__epochs': [ 50, 150 ],
-                           'classifier__hidden_units_L1': [ 10, 20 ],
-                           'classifier__hidden_units_L2': [ 2, 5 ],
-                           'classifier__l2_reg_penalty': [ 0.01, 0.1 ],
-                           'classifier__drop_out_rate': [ 0.1, 0.2 ] }
+        self.grid_dict = { 'classifier__learn_rate': [ 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1],
+                           'classifier__epochs': [ 10, 20, 30, 50, 100, 150, 200, 500, 1000 ],
+                           'classifier__hidden_units_L1': [ 1, 10, 20, 50, 100, 200 ],
+                           'classifier__hidden_units_L2': [ 1, 10, 20, 50, 100, 200 ],
+                           'classifier__l2_reg_penalty': [ 0.05, 0.1, 0.15, 0.20, 0.50 ],
+                           'classifier__drop_out_rate': [ 0.05, 0.1, 0.2, 0.3, 0.5, 0.7 ] }
         
         self.name = 'classifier'
         
@@ -63,9 +63,6 @@ class DenseClassificationModel:
         self.model.compile( optimizer=Adam( lr=learn_rate ), 
                             loss='binary_crossentropy', 
                             metrics=['accuracy'] )
-        #print( "here" )            
-        #print( self.arch )
-        #print( self.dense_layers )
         
         return self.model
     
@@ -109,7 +106,7 @@ class DenseClassificationModel:
     	
     		# print( i )
     	
-    		idx = mask_matrices[i] < np.max( mask_matrices[i] )*weight_matrix_threshold
+    		idx = mask_matrices[i] < ( np.max( mask_matrices[i] )*weight_matrix_threshold )
     		mask_matrices[i][ idx ] = 0
     		idx = mask_matrices[i] > 0
     		mask_matrices[i][ idx ] = 1
@@ -118,10 +115,10 @@ class DenseClassificationModel:
     		z_vec = np.sum( mask_matrices[i], axis=0 )
     		col_idx = z_vec == 0
     		
-    		plt.figure( figsize=[5.2,5.2])
-    		plt.imshow( mask_matrices[i]  )
-    		plt.set_cmap('hot')
-    		plt.colorbar()
+    		# plt.figure( figsize=[5.2,5.2])
+    		# plt.imshow( mask_matrices[i]  )
+    		# plt.set_cmap('hot')
+    		# plt.colorbar()
     		
     		
     	for i in range( 0, ( len( self.arch ) - 1 ) ):

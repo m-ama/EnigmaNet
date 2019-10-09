@@ -7,11 +7,11 @@ import Constants as constants
 
 class Model_Factory:
     
-    def build( self, model_type=constants.MODELS.DL_PREDICT, input_dim=0 ):
+    def build( self, model_type=constants.MODELS.DL_CLASSIFY, input_dim=0 ):
         
-        if model_type == constants.MODELS.DL_PREDICT:
+        if model_type == constants.MODELS.SV_CLASSIFY:
             
-            return DensePredictionModel( input_dim )
+            return None #working on this while the DL classification results are running
         
         elif model_type == constants.MODELS.DL_CLASSIFY:
             
